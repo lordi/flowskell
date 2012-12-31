@@ -1,3 +1,5 @@
+-- Scheme interpreter
+-- originally taken from https://github.com/jns2/haskell-scheme-tutorial
 {-# LANGUAGE ExistentialQuantification #-}
 module Interpreter where
 import System.Environment

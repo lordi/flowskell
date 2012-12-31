@@ -99,7 +99,6 @@ fluxPrimitives = [ ("make-line", f makeLine),
 main = do 
   (progname, [filename]) <- getArgsAndInitialize
   source <- readFile filename
-  putStrLn source
   createWindow progname
   displayCallback $= display source
   idleCallback $= Just idle
