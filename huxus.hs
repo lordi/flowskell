@@ -22,6 +22,36 @@ makeLine [Number t] = do
     renderPrimitive Lines $ mapM_ (\(x, y, z)->vertex$Vertex3 x y z) (myPoints (intToGLfloat $ realToFrac t))
     return (Bool True)
 
+makeCube :: [LispVal] -> IO LispVal
+makeCube [] = do
+    renderPrimitive Quads $ do
+        vertex $ Vertex3 w w w
+        vertex $ Vertex3 w w (-w)
+        vertex $ Vertex3 w (-w) (-w)
+        vertex $ Vertex3 w (-w) w
+        vertex $ Vertex3 w w w
+        vertex $ Vertex3 w w (-w)
+        vertex $ Vertex3 (-w) w (-w)
+        vertex $ Vertex3 (-w) w w
+        vertex $ Vertex3 w w w
+        vertex $ Vertex3 w (-w) w
+        vertex $ Vertex3 (-w) (-w) w
+        vertex $ Vertex3 (-w) w w
+        vertex $ Vertex3 (-w) w w
+        vertex $ Vertex3 (-w) w (-w)
+        vertex $ Vertex3 (-w) (-w) (-w)
+        vertex $ Vertex3 (-w) (-w) w
+        vertex $ Vertex3 w (-w) w
+        vertex $ Vertex3 w (-w) (-w)
+        vertex $ Vertex3 (-w) (-w) (-w)
+        vertex $ Vertex3 (-w) (-w) w
+        vertex $ Vertex3 w w (-w)
+        vertex $ Vertex3 w (-w) (-w)
+        vertex $ Vertex3 (-w) (-w) (-w)
+        vertex $ Vertex3 (-w) w (-w)
+    return (Bool True)
+    where w = 0.1 :: GLfloat
+
 makeThrowErrorFunc :: ([LispVal] -> IO LispVal) -> [LispVal] -> IOThrowsError LispVal
 makeThrowErrorFunc f obj = do
     x <- liftIO $ f obj
@@ -29,6 +59,7 @@ makeThrowErrorFunc f obj = do
 
 -- TODO "secs" should be a variable, not a funcion?! or at least cached
 fluxPrimitives = [ ("make-line", f makeLine),
+                   ("make-cube", f makeCube),
                    ("secs", f timeInSeconds)
                  ]
                     where f = IOFunc . makeThrowErrorFunc

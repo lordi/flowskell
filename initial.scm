@@ -1,1 +1,1 @@
-(define every-frame (make-line (secs)))
+(define every-frame (cons (make-cube) (make-line (secs))))
