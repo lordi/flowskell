@@ -17,10 +17,19 @@ myPoints t = map (\k -> (sin(2*pi*k/32)/2.0+cos(t+k/15.0)/4.0,cos(k/32*pi*k/32)/
 
 timeInSeconds [] = do x <- time; return $ Number $ floor $ realToFrac x
 
+timeInMilliSeconds [] = do x <- time; return $ Number $ floor $ 1000 * realToFrac x
+
 makeLine :: [LispVal] -> IO LispVal
 makeLine [Number t] = do
     renderPrimitive Lines $ mapM_ (\(x, y, z)->vertex$Vertex3 x y z) (myPoints (intToGLfloat $ realToFrac t))
     return (Bool True)
+
+makeColor :: [LispVal] -> IO LispVal
+makeColor [Number r, Number g, Number b] = do
+    putStrLn $ show r
+    color $ Color3 (togl r) (togl g) (togl b)
+    return (Bool True)
+        where togl x = ((intToGLfloat . realToFrac) x) / 255.0
 
 makeCube :: [LispVal] -> IO LispVal
 makeCube [] = do
@@ -60,7 +69,9 @@ makeThrowErrorFunc f obj = do
 -- TODO "secs" should be a variable, not a funcion?! or at least cached
 fluxPrimitives = [ ("make-line", f makeLine),
                    ("make-cube", f makeCube),
-                   ("secs", f timeInSeconds)
+                   ("color", f makeColor),
+                   ("secs", f timeInSeconds),
+                   ("msecs", f timeInMilliSeconds)
                  ]
                     where f = IOFunc . makeThrowErrorFunc
 
