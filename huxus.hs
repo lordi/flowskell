@@ -19,31 +19,24 @@ makeLine :: [LispVal] -> IOThrowsError LispVal
 makeLine [] = do
     t <- liftIO $ time
     liftIO $ renderPrimitive Lines $ mapM_ (\(x, y, z)->vertex$Vertex3 x y z) (myPoints (intToGLfloat (realToFrac t)))
-    --liftIO $ renderPrimitive Points []
-    --liftIO $ putStrLn "xx"
-    --liftIO $ flush
     return $ Bool True
---draw_cube = ...
---every_frame = do
---    mapM_ draw_cube [1..10]
 
 main = do 
-  (progname, _) <- getArgsAndInitialize
-  --env <- runIOThrows' $ load "test.scm"
+  (progname, [filename]) <- getArgsAndInitialize
+  source <- readFile filename
   createWindow "Hello World"
-  displayCallback $= display
+  displayCallback $= display source
   idleCallback $= Just idle
   mainLoop
 
-display = do 
+display source = do 
   clear [ColorBuffer]
-
+  -- TODO: the following 2,5 lines should not be done every frame
   env <- primitiveBindings
   env2 <- bindVars env [("make-line", IOFunc makeLine)]
-  x <- evalString env2 "(make-line)"
-  putStrLn x
-
+  evalString env2 $ source ++ "(every-frame)"
   flush
+
 idle = do
   postRedisplay Nothing
 
