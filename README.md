@@ -1,6 +1,6 @@
-Fluskell - Fluxus clone in Haskell
-==================================
+Flowskell - Fluxus clone in Haskell
+===================================
 
-TBD
+Under construction ...
 
-    runhaskell fluskell.hs scripts/cubes.scm
+    runhaskell Flowskell/Viewer.hs scripts/recursion.scm
