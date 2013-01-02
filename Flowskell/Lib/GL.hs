@@ -19,6 +19,10 @@ makeTeapot [] = do
     renderObject Solid (Teapot 1)
     return (Bool True)
 
+doIdentity [] = do
+    loadIdentity
+    return (Bool True)
+
 doColor :: [LispVal] -> IO LispVal
 doColor [Float r, Float g, Float b] = do
     color $ Color3 (togl r) (togl g) (togl b)
@@ -96,6 +100,7 @@ glPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
                    ("color", doColor),
                    ("scale", doScale),
                    ("translate", doTranslate),
-                   ("rotate", doRotate)
+                   ("rotate", doRotate),
+                   ("identity", doIdentity)
                  ]
 
