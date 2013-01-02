@@ -3,6 +3,7 @@ import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Control.Monad
 import Control.Monad.Error
 import Graphics.Rendering.GLU.Raw
+import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock
 import Data.Time.Calendar
@@ -19,9 +20,9 @@ makeTeapot [] = do
     renderObject Solid (Teapot 1)
     return (Bool True)
 
-doIdentity [] = do
-    loadIdentity
-    return (Bool True)
+doIdentity [] = loadIdentity >> return (Bool True)
+doPush [] = glPushMatrix >> return (Bool True)
+doPop [] = glPopMatrix >> return (Bool True)
 
 doColor :: [LispVal] -> IO LispVal
 doColor [Float r, Float g, Float b] = do
@@ -101,6 +102,8 @@ glPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
                    ("scale", doScale),
                    ("translate", doTranslate),
                    ("rotate", doRotate),
-                   ("identity", doIdentity)
+                   ("identity", doIdentity),
+                   ("push", doPush),
+                   ("pop", doPop)
                  ]
 
