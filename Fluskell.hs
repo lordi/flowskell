@@ -5,7 +5,9 @@ import Graphics.Rendering.GLU.Raw
 import Graphics.UI.GLUT hiding (Bool)
 import Data.Time.Clock
 import Data.Time.Calendar
-import Interpreter
+
+import Language.Scheme.Core
+import Language.Scheme.Types
 
 time = getCurrentTime >>= return . utctDayTime
 
@@ -153,8 +155,11 @@ main = let light0 = Light 0 in do
 display source = do 
   clear [ColorBuffer, DepthBuffer]
   -- TODO: the following line should not be done every frame
-  env <- primitiveBindings >>= flip bindVars fluxPrimitives
-  preservingMatrix $ evalString env $ source ++ "\n(every-frame)"
+  env <- primitiveBindings
+  -- TODO >>= flip bindVars fluxPrimitives
+  preservingMatrix $ do
+    ret <- evalString env $ source ++ "\n(every-frame)"
+    putStrLn ret
   swapBuffers
 
 idle = do
