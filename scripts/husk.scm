@@ -1,1 +1,5 @@
-(display "yy") (define every-frame2 (lambda () (display "xx"))) (every-frame2)
+(define every-frame
+  (lambda ()
+    (display (msecs))
+    (scale 64 64 64)
+    (make-cube)))

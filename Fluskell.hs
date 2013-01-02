@@ -9,6 +9,7 @@ import Data.Time.Calendar
 import Language.Scheme.Core
 import Language.Scheme.Types
 import Language.Scheme.Parser
+import Language.Scheme.Variables
 
 time = getCurrentTime >>= return . utctDayTime
 
@@ -103,19 +104,20 @@ makeThrowErrorFunc f obj = do
     return x
 
 -- TODO "secs" should be a variable, not a funcion?! or at least cached
-fluxPrimitives = [ ("make-line", f makeLine),
-                   ("make-cube", f makeCube),
-                   ("make-teapot", f makeTeapot),
+fluxPrimitives :: [ ((String, String), LispVal) ]
+fluxPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
+                   ("make-line", makeLine),
+                   ("make-cube", makeCube),
+                   ("make-teapot", makeTeapot),
 
-                   ("color", f doColor),
-                   ("scale", f doScale),
-                   ("translate", f doTranslate),
-                   ("rotate", f doRotate),
+                   ("color", doColor),
+                   ("scale", doScale),
+                   ("translate", doTranslate),
+                   ("rotate", doRotate),
 
-                   ("secs", f timeInSeconds),
-                   ("msecs", f timeInMilliSeconds)
-                 ]
-                    where f = IOFunc . makeThrowErrorFunc
+                   ("secs", timeInSeconds),
+                   ("msecs", timeInMilliSeconds)
+                 ] 
 
 main = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
@@ -159,11 +161,12 @@ main = let light0 = Light 0 in do
 display source = do 
   clear [ColorBuffer, DepthBuffer]
   -- TODO: the following line should not be done every frame
-  env <- primitiveBindings
-  -- TODO >>= flip bindVars fluxPrimitives
+  env' <- primitiveBindings
+  env <- extendEnv env' fluxPrimitives
   preservingMatrix $ do
-    let exprs = extractValue $ readExprList $ source ++ "\n(every-frame)" in
-        forM exprs $ \x -> (runIOThrows . liftM show (evalLisp env x) >>= putStrLn)
+    let exprs = extractValue $ readExprList $ source ++ "\n(every-frame)" in do
+        forM exprs $ runIOThrows . liftM show . evalLisp env
+        forM exprs $ putStrLn . show
   swapBuffers
 
 idle = do
