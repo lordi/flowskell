@@ -8,11 +8,15 @@ import Data.Time.Calendar
 
 import Language.Scheme.Core
 import Language.Scheme.Types
+import Language.Scheme.Parser
 
 time = getCurrentTime >>= return . utctDayTime
 
 intToGLfloat :: Float -> GLfloat
 intToGLfloat x = realToFrac x
+
+runIOThrows' :: IOThrowsError String -> IO String
+runIOThrows' action = runErrorT (trapError action) >>= return . extractValue
 
 myPoints :: GLfloat -> [(GLfloat,GLfloat,GLfloat)]
 myPoints t = map (\k -> (sin(2*pi*k/32)/2.0+cos(tx+k/15.0)/4.0,cos(k/32*pi*k/32)/2.0+cos(tx/4.0+k/15.0)/2.0,0.0)) [1..32]
@@ -158,8 +162,8 @@ display source = do
   env <- primitiveBindings
   -- TODO >>= flip bindVars fluxPrimitives
   preservingMatrix $ do
-    ret <- evalString env $ source ++ "\n(every-frame)"
-    putStrLn ret
+    let exprs = extractValue $ readExprList $ source ++ "\n(every-frame)" in
+        forM exprs $ \x -> (runIOThrows . liftM show (evalLisp env x) >>= putStrLn)
   swapBuffers
 
 idle = do
