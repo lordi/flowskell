@@ -1,8 +1,8 @@
-import Graphics.Rendering.OpenGL hiding (Bool)
+import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Control.Monad
 import Control.Monad.Error
 import Graphics.Rendering.GLU.Raw
-import Graphics.UI.GLUT hiding (Bool)
+import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock
 import Data.Time.Calendar
 
@@ -19,45 +19,36 @@ intToGLfloat x = realToFrac x
 runIOThrows' :: IOThrowsError String -> IO String
 runIOThrows' action = runErrorT (trapError action) >>= return . extractValue
 
-myPoints :: GLfloat -> [(GLfloat,GLfloat,GLfloat)]
-myPoints t = map (\k -> (sin(2*pi*k/32)/2.0+cos(tx+k/15.0)/4.0,cos(k/32*pi*k/32)/2.0+cos(tx/4.0+k/15.0)/2.0,0.0)) [1..32]
-        where tx = t / 1000.0
-
-timeInSeconds [] = do x <- time; return $ Number $ floor $ realToFrac x
-timeInMilliSeconds [] = do x <- time; return $ Number $ floor $ 1000 * realToFrac x
+timeInSeconds [] = do x <- time; return $ Float $ realToFrac x
+timeInMilliSeconds [] = do x <- time; return $ Float $ 1000 * (realToFrac x)
 
 makeTeapot [] = do
     renderObject Solid (Teapot 1)
     return (Bool True)
 
-makeLine :: [LispVal] -> IO LispVal
-makeLine [Number t] = do
-    renderPrimitive Lines $ mapM_ (\(x, y, z)->vertex$Vertex3 x y z) (myPoints (intToGLfloat $ realToFrac t))
-    return (Bool True)
-
 doColor :: [LispVal] -> IO LispVal
-doColor [Number r, Number g, Number b] = do
+doColor [Float r, Float g, Float b] = do
     color $ Color3 (togl r) (togl g) (togl b)
     return (Bool True)
-        where togl x = ((intToGLfloat . realToFrac) x) / 256.0
+        where togl = intToGLfloat . realToFrac
 
 doTranslate :: [LispVal] -> IO LispVal
-doTranslate [Number r, Number g, Number b] = do
+doTranslate [Float r, Float g, Float b] = do
     translate $ Vector3 (togl r) (togl g) (togl b)
     return (Bool True)
-        where togl x = ((intToGLfloat . realToFrac) x) / 256.0
+        where togl = intToGLfloat . realToFrac
 
 doScale :: [LispVal] -> IO LispVal
-doScale [Number x, Number y, Number z] = do
+doScale [Float x, Float y, Float z] = do
     scale (togl x) (togl y) (togl z)
     return (Bool True)
-        where togl x = ((intToGLfloat . realToFrac) x) / 256.0
+        where togl = intToGLfloat . realToFrac
 
 doRotate :: [LispVal] -> IO LispVal
-doRotate [Number a, Number x, Number y, Number z] = do
+doRotate [Float a, Float x, Float y, Float z] = do
     rotate (togl a) $ Vector3 (togl x) (togl y) (togl z)
     return (Bool True)
-        where togl x = ((intToGLfloat . realToFrac) x) / 256.0
+        where togl = intToGLfloat . realToFrac
 
 n :: [Normal3 GLfloat]
 n = [(Normal3 (-1.0) 0.0 0.0),
@@ -106,7 +97,6 @@ makeThrowErrorFunc f obj = do
 -- TODO "secs" should be a variable, not a funcion?! or at least cached
 fluxPrimitives :: [ ((String, String), LispVal) ]
 fluxPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
-                   ("make-line", makeLine),
                    ("make-cube", makeCube),
                    ("make-teapot", makeTeapot),
 
@@ -161,8 +151,7 @@ main = let light0 = Light 0 in do
 display source = do 
   clear [ColorBuffer, DepthBuffer]
   -- TODO: the following line should not be done every frame
-  env' <- primitiveBindings
-  env <- extendEnv env' fluxPrimitives
+  env <- primitiveBindings >>= (flip extendEnv fluxPrimitives)
   preservingMatrix $ do
     let exprs = extractValue $ readExprList $ source ++ "\n(every-frame)" in do
         forM exprs $ runIOThrows . liftM show . evalLisp env

@@ -1,5 +1,4 @@
 (define every-frame
   (lambda ()
-    (display (msecs))
-    (scale 64 64 64)
+    (scale (/ (modulo (secs) 60.0) 60) (/ (modulo (secs) 60.0) 60) (/ (modulo (secs) 60.0) 60))
     (make-cube)))
