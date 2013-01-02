@@ -3,4 +3,4 @@ Fluskell - Fluxus clone in Haskell
 
 TBD
 
-    runhaskell Fluskell.hs scripts/cubes.scm
+    runhaskell fluskell.hs scripts/cubes.scm

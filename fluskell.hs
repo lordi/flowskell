@@ -144,18 +144,21 @@ main = let light0 = Light 0 in do
 
   --lookAt (Vertex3 0.0 0.0 5.0) (Vertex3 0.0 0.0 0.0) (Vector3 0.0 1.0 0.0)
 
-  displayCallback $= display source
+  env <- primitiveBindings >>= (flip extendEnv fluxPrimitives)
+
+  let exprs = extractValue $ readExprList $ source in do
+    forM exprs $ runIOThrows . liftM show . evalLisp env
+    forM exprs $ putStrLn . show
+  displayCallback $= display env
   idleCallback $= Just idle
   mainLoop
 
-display source = do 
+display env = do 
   clear [ColorBuffer, DepthBuffer]
-  -- TODO: the following line should not be done every frame
-  env <- primitiveBindings >>= (flip extendEnv fluxPrimitives)
   preservingMatrix $ do
-    let exprs = extractValue $ readExprList $ source ++ "\n(every-frame)" in do
-        forM exprs $ runIOThrows . liftM show . evalLisp env
-        forM exprs $ putStrLn . show
+    evalString env "(every-frame)" >>= putStrLn
+    --let exprs = extractValue $ readExprList $ "(every-frame)" in do
+    --  forM exprs $ runIOThrows . liftM show . evalLisp env
   swapBuffers
 
 idle = do
