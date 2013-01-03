@@ -12,6 +12,7 @@ import Language.Scheme.Parser
 import Language.Scheme.Variables
 
 import Flowskell.Lib.GL (glPrimitives)
+import Flowskell.Lib.Random (randomPrimitives)
 
 time = getCurrentTime >>= return . utctDayTime
 
@@ -31,6 +32,8 @@ otherPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
                    ("secs", timeInSeconds),
                    ("msecs", timeInMilliSeconds)
                  ]
+
+primitives = glPrimitives ++ randomPrimitives ++ otherPrimitives
 
 main = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
@@ -67,7 +70,7 @@ main = let light0 = Light 0 in do
 
   --lookAt (Vertex3 0.0 0.0 5.0) (Vertex3 0.0 0.0 0.0) (Vector3 0.0 1.0 0.0)
 
-  env <- primitiveBindings >>= (flip extendEnv $ glPrimitives ++ otherPrimitives)
+  env <- primitiveBindings >>= flip extendEnv primitives
 
   let exprs = extractValue $ readExprList $ source in do
     forM exprs $ runIOThrows . liftM show . evalLisp env
