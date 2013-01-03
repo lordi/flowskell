@@ -8,10 +8,7 @@ import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock
 import Data.Time.Calendar
 
-import Language.Scheme.Core
 import Language.Scheme.Types
-import Language.Scheme.Parser
-import Language.Scheme.Variables
 
 intToGLfloat :: Float -> GLfloat
 intToGLfloat x = realToFrac x
@@ -87,14 +84,7 @@ makeCube [] = let nfaces = zip n faces
                           vertex v3) nfaces
                 return $ Bool True
 
-makeThrowErrorFunc :: ([LispVal] -> IO LispVal) -> [LispVal] -> IOThrowsError LispVal
-makeThrowErrorFunc f obj = do
-    x <- liftIO $ f obj
-    return x
-
--- TODO "secs" should be a variable, not a funcion?! or at least memoized
-glPrimitives :: [ ((String, String), LispVal) ]
-glPrimitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) [
+glIOPrimitives = [
                    ("make-cube", makeCube),
                    ("make-teapot", makeTeapot),
 
