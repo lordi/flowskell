@@ -23,14 +23,15 @@ main = let light0 = Light 0 in do
   source <- readFile filename
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow progname
-  ambient (Light 0) $= Color4 0.2 0.2 0.2 1
-  diffuse (Light 0) $= Color4 1 1 1 0.6
-  position (Light 0) $= Vertex4  0 0 3 0
+  ambient light0 $= Color4 0.2 0.2 0.2 1
+  diffuse light0 $= Color4 1 1 1 0.6
+  position light0 $= Vertex4 0 0 3 0
   lightModelAmbient $= Color4 0.2 0.2 0.2 1
   lightModelLocalViewer $= Disabled
+  materialShininess Front $= 0.0
   frontFace $= CW
   lighting $= Enabled
-  light (Light 0) $= Enabled
+  light light0 $= Enabled
   autoNormal $= Enabled
   normalize $= Enabled
   depthFunc $= Just Less

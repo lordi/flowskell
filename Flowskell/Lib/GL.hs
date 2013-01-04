@@ -24,8 +24,12 @@ doPop [] = glPopMatrix >> return (Bool True)
 doColor :: [LispVal] -> IO LispVal
 doColor [Float r, Float g, Float b] = do
     color $ Color3 (togl r) (togl g) (togl b)
+    materialDiffuse Front $= c
+    materialAmbient Front $= c
+    materialSpecular Front $= c
     return (Bool True)
         where togl = intToGLfloat . realToFrac
+              c = Color4 (togl r) (togl g) (togl b) (0.2::GLfloat)
 
 doTranslate :: [LispVal] -> IO LispVal
 doTranslate [Float r, Float g, Float b] = do
