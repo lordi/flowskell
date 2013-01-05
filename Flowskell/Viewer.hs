@@ -1,4 +1,5 @@
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
+import Graphics.Rendering.OpenGL.GLU (perspective)
 import Control.Monad
 import Control.Monad.Error
 import Graphics.Rendering.GLU.Raw
@@ -46,32 +47,16 @@ main = let light0 = Light 0 in do
   reshapeCallback $= Just reshape
   mainLoop
 
-{-
-reshape screenSize@(Size w h) = do
-  viewport $= ((Position 0 0), screenSize)
-  matrixMode $= Projection 
-  loadIdentity
-  let near   = 0.1
-      far    = 140
-      fov    = 130
-      ang    = (fov*pi)/(360)
-      top    = near / ( cos(ang) / sin(ang) )
-      aspect = fromIntegral(w)/fromIntegral(h)
-      right  = top*aspect
-  frustum (-right) right (-top) top near far
-  matrixMode $= Modelview 0
--}
-
-reshape s@(Size w h) = let aspect = (fromIntegral w) / (fromIntegral h) in do
+reshape s@(Size w h) = do
   viewport $= ((Position 0 0), s)
   matrixMode $= Projection
   loadIdentity
-  let near = 0.0
+  let fov = 60
+      near = 0.01
       far = 100
-      top = 1.0
-      right = 1.0 * aspect
-  putStrLn $ show (top, right)
-  frustum (-right) right (-top) top near far
+      aspect = (fromIntegral w) / (fromIntegral h)
+  perspective fov aspect near far
+  translate $ Vector3 0 0 (-1::GLfloat)
   matrixMode $= Modelview 0
 
 display env = do

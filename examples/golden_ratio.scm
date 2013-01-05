@@ -31,10 +31,10 @@
 )
 (define init
   (lambda ()
-    (scale 0.3 0.3 0.3)
-    (translate 0.0 -2.0 0.0)
+    (scale 0.2 0.2 0.2)
+    (translate 0.0 -1.2 0.0)
     (rotate 90.0 0.0 0.0 1.0)
-    (rotate 45.0 0.0 1.0 0.0)
+    (rotate -45.0 0.0 1.0 0.0)
     (rotate (modulo (/ (msecs) 30) 360) 1.0 0.0 0.0)))
 (define every-frame
   (lambda ()
