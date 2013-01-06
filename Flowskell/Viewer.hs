@@ -12,11 +12,12 @@ import Language.Scheme.Variables
 import Flowskell.Lib.GL (glIOPrimitives)
 import Flowskell.Lib.Random (randomIOPrimitives)
 import Flowskell.Lib.Time (timeIOPrimitives)
+import Flowskell.Lib.Color (colorIOPrimitives)
 
 primitives :: [ ((String, String), LispVal) ]
 primitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) other
                 where makeThrowErrorFunc f obj = liftIO $ f obj
-                      other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives
+                      other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives
 
 main = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
@@ -29,6 +30,7 @@ main = let light0 = Light 0 in do
   lightModelAmbient $= Color4 0.2 0.2 0.2 1
   lightModelLocalViewer $= Disabled
   materialShininess Front $= 0.0
+  shadeModel $= Smooth
   frontFace $= CW
   lighting $= Enabled
   light light0 $= Enabled

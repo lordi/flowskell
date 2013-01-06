@@ -22,6 +22,7 @@ doPush [] = glPushMatrix >> return (Bool True)
 doPop [] = glPopMatrix >> return (Bool True)
 
 doColor :: [LispVal] -> IO LispVal
+doColor [List arglist] = doColor arglist
 doColor [Float r, Float g, Float b] = do
     color $ Color3 (togl r) (togl g) (togl b)
     materialDiffuse Front $= c
