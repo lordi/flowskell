@@ -1,0 +1,17 @@
+Name: Flowskell
+Version: 0.0.1
+Description: OpenGL livecoding enviroment (fluxus clone)
+License: GPL
+License-file: LICENSE
+Author: Hannes Gräuler
+Maintainer: hgraeule@uos.de
+Build-Type: Simple
+Cabal-Version: >=1.2
+
+Executable flowskell
+  Main-is: Main.hs
+  Hs-Source-Dirs: src
+  Extensions: CPP
+  Build-Depends: base >= 3 && < 5, containers, mtl, stm, random
+  Build-Depends: husk-scheme, colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL
+  Ghc-Options: -threaded
