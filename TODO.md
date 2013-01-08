@@ -4,7 +4,7 @@ GL:
  * Collect ideas/implement Flowskell.Lib.Glitch (distortion effects, etc)
  * Shaders! (local and global (glow, blur)) http://wiki.delphigl.com/index.php/Shadersammlung
  * Read http://www.arcadianvisions.com/blog/?p=224
- * make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)
+ * ~~make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)~~
 
 Scheme:
 

@@ -30,7 +30,7 @@ doColor [Float r, Float g, Float b] = do
     materialSpecular Front $= c
     return (Bool True)
         where togl = intToGLfloat . realToFrac
-              c = Color4 (togl r) (togl g) (togl b) (0.2::GLfloat)
+              c = Color4 (togl r) (togl g) (togl b) (1.0::GLfloat)
 
 doTranslate :: [LispVal] -> IO LispVal
 doTranslate [Float r, Float g, Float b] = do
@@ -78,6 +78,44 @@ v x = Vertex3 v0 v1 v2
               | x == 0 || x == 3 || x == 4 || x == 7 = 1
               | x == 1 || x == 2 || x == 5 || x == 6 = -1
 
+setColor r g b = do
+    let c = (Color4 r g b 1 :: Color4 GLfloat)
+    color (Color3 r g b :: Color3 GLfloat)
+    materialDiffuse Front $= c
+    materialAmbient Front $= c
+    materialSpecular Front $= c
+
+makeGrid :: [LispVal] -> IO LispVal
+makeGrid [] = do
+    setColor 1 1 1
+    lineWidth $= 0.5
+    mapM (\c -> do
+        renderPrimitive Lines $ do
+            vertex $ (Vertex3 (-c) (-1)  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 (-c)   1   0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 ( c) (-1)  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 ( c)   1   0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 (-1) (-c)  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   1  (-c)  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 (-1) ( c)  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   1  ( c)  0 :: Vertex3 GLfloat)
+            ) [0,0.25,0.5,0.75]
+    lineWidth $= 2.0
+    renderPrimitive LineLoop $ do
+        vertex $ (Vertex3 (-1) (-1)  0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3 (-1)   1   0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3   1    1   0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3   1  (-1)  0 :: Vertex3 GLfloat)
+    setColor 1 0 0
+    lineWidth $= 4.0
+    mapM (\(x,y,z) -> do
+        setColor x y z
+        renderPrimitive Lines $ do
+            vertex $ (Vertex3 0 0 0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 x y z :: Vertex3 GLfloat)
+            ) [(1,0,0),(0,1,0),(0,0,1)]
+    return $ Bool True
+
 makeCube :: [LispVal] -> IO LispVal
 makeCube [] = let nfaces = zip n faces
           in do mapM (\(n, [v0, v1, v2, v3]) -> do
@@ -91,6 +129,7 @@ makeCube [] = let nfaces = zip n faces
 
 glIOPrimitives = [
                    ("make-cube", makeCube),
+                   ("make-grid", makeGrid),
                    ("make-teapot", makeTeapot),
 
                    ("color", doColor),
