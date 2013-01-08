@@ -6,11 +6,14 @@ import Language.Scheme.Core
 import Language.Scheme.Types
 import Language.Scheme.Parser
 import Language.Scheme.Variables
+import Language.Scheme.Compiler
 
 import Flowskell.Lib.GL (glIOPrimitives)
 import Flowskell.Lib.Random (randomIOPrimitives)
 import Flowskell.Lib.Time (timeIOPrimitives)
 import Flowskell.Lib.Color (colorIOPrimitives)
+
+import Paths_Flowskell
 
 primitives :: [ ((String, String), LispVal) ]
 primitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) other
@@ -18,13 +21,13 @@ primitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) other
                       other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives
 
 initSchemeEnv filename = do
-  source <- readFile filename
+  stdlib <- getDataFileName "lib/stdlib.scm"
+  stdlib2 <- getDataFileName "lib/flowskell.scm"
   env <- primitiveBindings >>= flip extendEnv primitives
-
-  let exprs = extractValue $ readExprList $ source in do
-    forM exprs $ runIOThrows . liftM show . evalLisp env
-    forM exprs $ putStrLn . show
-
+  let files = [stdlib, stdlib2, filename]
+  mapM (\file -> do
+    result <- evalString env $ "(load \"" ++ (escapeBackslashes file) ++ "\")"
+    putStrLn $ file ++ ": " ++ result) files
   return env
 
 evalFrame env = do
