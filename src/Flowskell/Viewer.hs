@@ -6,7 +6,7 @@ import Graphics.UI.GLUT hiding (Bool, Float)
 
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 
-main = let light0 = Light 0 in do
+viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
 
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
