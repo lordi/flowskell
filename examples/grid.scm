@@ -1,10 +1,11 @@
-; simple turning cube
+; simple turning cube on a grid
 (define every-frame
   (lambda ()
-    (scale 0.5 0.5 0.5)
-    (rotate -45.0 0.5 0.0 0.0)
-    (rotate (modulo (/ (msecs) 20) 360) 0.0 0.0 0.5)
+    (scale 0.5)
+    (rotate -45.0 x-axis)
+    (rotate (/ (msecs) 100) z-axis)
     (make-grid)
-    (scale 0.5 0.5 0.5)
-    (color 0.5 0.5 0.5)
+    (rotate (/ (msecs) 30) z-axis)
+    (scale 0.5)
+    (color gray)
     (make-cube)))

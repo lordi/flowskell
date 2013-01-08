@@ -7,11 +7,13 @@ import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatri
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock
 import Data.Time.Calendar
+import Data.Array
 
 import Language.Scheme.Types
 
 intToGLfloat :: Float -> GLfloat
 intToGLfloat x = realToFrac x
+togl = intToGLfloat . realToFrac
 
 makeTeapot [] = do
     renderObject Solid (Teapot 1)
@@ -22,33 +24,30 @@ doPush [] = glPushMatrix >> return (Bool True)
 doPop [] = glPopMatrix >> return (Bool True)
 
 doColor :: [LispVal] -> IO LispVal
-doColor [List arglist] = doColor arglist
-doColor [Float r, Float g, Float b] = do
-    color $ Color3 (togl r) (togl g) (togl b)
-    materialDiffuse Front $= c
-    materialAmbient Front $= c
-    materialSpecular Front $= c
+doColor [Vector v] =
+    let [Float r, Float g, Float b] = elems v in do
+    setColor (realToFrac r) (realToFrac g) (realToFrac b)
     return (Bool True)
-        where togl = intToGLfloat . realToFrac
-              c = Color4 (togl r) (togl g) (togl b) (1.0::GLfloat)
 
 doTranslate :: [LispVal] -> IO LispVal
-doTranslate [Float r, Float g, Float b] = do
-    translate $ Vector3 (togl r) (togl g) (togl b)
+doTranslate [Vector v] =
+    let [Float x, Float y, Float z] = elems v in do
+    translate $ Vector3 (togl x) (togl y) (togl z)
     return (Bool True)
-        where togl = intToGLfloat . realToFrac
 
 doScale :: [LispVal] -> IO LispVal
+doScale [Float r] = do
+    scale (togl r) (togl r) (togl r)
+    return (Bool True)
 doScale [Float x, Float y, Float z] = do
     scale (togl x) (togl y) (togl z)
     return (Bool True)
-        where togl = intToGLfloat . realToFrac
 
 doRotate :: [LispVal] -> IO LispVal
-doRotate [Float a, Float x, Float y, Float z] = do
+doRotate [Float a, Vector v] = do
+    let [Float x, Float y, Float z] = elems v in do
     rotate (togl a) $ Vector3 (togl x) (togl y) (togl z)
     return (Bool True)
-        where togl = intToGLfloat . realToFrac
 
 n :: [Normal3 GLfloat]
 n = [(Normal3 (-1.0) 0.0 0.0),

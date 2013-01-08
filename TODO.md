@@ -9,7 +9,8 @@ GL:
 Scheme:
 
  * midi input
- * unify (vector 0 0 0) stuff, fix error with 1 instead 1.0, then implement HSV coloring
+ * ~~unify (vector 0 0 0) stuff~~, then implement HSV coloring
+ * fix float error
  * scheme compilation instead of evaluation
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
 
@@ -19,3 +20,6 @@ Viewer:
  * optional code, fps display
  * live code reloading
 
+Other:
+
+ * Write tests that verify that no example contains errors
