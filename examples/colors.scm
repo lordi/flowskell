@@ -1,9 +1,10 @@
 (define (list . objs)  objs)
+(define vector list)
 (define dim 6)
 (define col
   (lambda (n r)
     (translate 1.0 0.0 0.0)
-    (color (list (/ (sin (/ (secs) 10.0)) 1.0) (cos (/ n 10.0)) (- 0.3 (/ (sin (* (/ (secs) 8.0) n)) 3.0))))
+    (color (vector (/ (sin (/ (secs) 10.0)) 1.0) (cos (/ n 10.0)) (- 0.3 (/ (sin (* (/ (secs) 8.0) n)) 3.0))))
     (push)
         (translate 0.0 0.0 (- 0.3 (/ (sin (* (/ (secs) 8.0) n)) 3.0)))
         (scale 0.4 0.4 0.4)
