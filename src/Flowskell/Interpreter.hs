@@ -25,9 +25,13 @@ initSchemeEnv filename = do
   stdlib2 <- getDataFileName "lib/flowskell.scm"
   env <- primitiveBindings >>= flip extendEnv primitives
   let files = [stdlib, stdlib2, filename]
+  evalString env $ "(define *source* \"" ++ (escapeBackslashes filename) ++ "\")"
   mapM (\file -> do
     result <- evalString env $ "(load \"" ++ (escapeBackslashes file) ++ "\")"
     putStrLn $ file ++ ": " ++ result) files
+
+  -- x <- liftIO $ extractValue $ evalLisp env $ "*source*"
+  -- putStrLn $ show x
   return env
 
 evalFrame env = do
