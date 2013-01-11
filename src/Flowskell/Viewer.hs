@@ -4,7 +4,8 @@ import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.GLU.Raw
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Flowskell.Interpreter (initSchemeEnv, evalFrame)
+import Flowskell.Interpreter (initSchemeEnv, evalFrame, evalLisp')
+import Language.Scheme.Types (LispVal (Atom, String))
 
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
@@ -31,7 +32,7 @@ viewer = let light0 = Light 0 in do
   displayCallback $= display angle envRef
   idleCallback $= Just idle
   reshapeCallback $= Just (reshape angle)
-  keyboardMouseCallback $= Just (keyboardMouse angle envRef filename)
+  keyboardMouseCallback $= Just (keyboardMouse angle envRef)
   mainLoop
 
 reshape angle s@(Size w h) = do
@@ -60,20 +61,23 @@ display angle envRef = do
 idle = do
   postRedisplay Nothing
 
-keyboardAct a _ _ (SpecialKey KeyLeft) Down = do
+keyboardAct a _ (SpecialKey KeyLeft) Down = do
   a' <- get a
   writeIORef a (a' + 5)
 
-keyboardAct a _ _ (SpecialKey KeyRight) Down = do
+keyboardAct a _ (SpecialKey KeyRight) Down = do
   a' <- get a
   writeIORef a (a' - 5)
 
-keyboardAct a envRef f (SpecialKey KeyF5) Down = do
-  putStrLn "Reloading"
-  env <- initSchemeEnv f
-  writeIORef envRef env
+-- |Reload scheme source by initialising a new environment and storing it in
+--  envRef.
+keyboardAct a envRef (SpecialKey KeyF5) Down = do
+  env <- get envRef
+  evalLisp' env (Atom "*source*") >>= \x -> case x of
+    String source -> initSchemeEnv source >>= writeIORef envRef
+    _ -> return ()
 
-keyboardAct _ _ _ _ _ = return ()
+keyboardAct _ _ _ _ = return ()
 
-keyboardMouse angle e f key state modifiers position = do
-  keyboardAct angle e f key state
+keyboardMouse angle envRef key state modifiers position = do
+  keyboardAct angle envRef key state
