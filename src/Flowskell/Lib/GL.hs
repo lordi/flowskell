@@ -126,10 +126,16 @@ makeCube [] = let nfaces = zip n faces
                           vertex v3) nfaces
                 return $ Bool True
 
+makeSphere :: [LispVal] -> IO LispVal
+makeSphere [] = do
+         renderObject Solid (Sphere' 1 15 15)
+         return $ Bool True
+
 glIOPrimitives = [
                    ("make-cube", makeCube),
                    ("make-grid", makeGrid),
                    ("make-teapot", makeTeapot),
+                   ("make-sphere", makeSphere),
 
                    ("color", doColor),
                    ("scale", doScale),
