@@ -7,7 +7,7 @@
     (rotate (* (round (modulo (secs) 60)) 6) z-axis)
     (scale 0.5 0.015 0.015)
     (translate (vector 1.0 0.0 0.0))
-    (make-cube)
+    (draw-cube)
     (pop)))
 (define minute-hand
   (lambda ()
@@ -15,7 +15,7 @@
     (rotate (* (modulo (secs) 3600) 0.1) z-axis)
     (scale 0.5 0.03 0.03)
     (translate (vector 1.0 0.0 0.0))
-    (make-cube)
+    (draw-cube)
     (pop)))
 (define hour-hand
   (lambda ()
@@ -23,7 +23,7 @@
     (rotate (* (modulo (secs) (* 12 3600)) (/ 0.1 12)) z-axis)
     (scale 0.25 0.04 0.04)
     (translate (vector 1.0 0.0 0.0))
-    (make-cube)
+    (draw-cube)
     (pop)))
 (define fat-ticks
   (lambda (n c)
@@ -31,7 +31,7 @@
     (rotate (* (/ n c) 360.0) z-axis)
     (translate (vector 1.0 0.0 0.0))
     (scale 0.04 0.04 0.04)
-    (make-cube)
+    (draw-cube)
     (pop)
     (if (> n 0) (fat-ticks (- n 1) c))))
 (define ticks
@@ -40,7 +40,7 @@
     (rotate (* (/ n c) 360.0) z-axis)
     (translate (vector 1.0 0.0 0.0))
     (scale 0.01 0.01 0.01)
-    (make-cube)
+    (draw-cube)
     (pop)
     (if (> n 0) (ticks (- n 1) c))))
 (define every-frame
@@ -48,7 +48,7 @@
     (scale 0.5 -0.5 0.5)
     (rotate 15.0 x-axis)
     (translate (vector 0.0 -0.1 0.0))
-    ; (make-grid)
+    ; (draw-grid)
     (color red)
     (ticks 60 60)
     (fat-ticks 12 12)

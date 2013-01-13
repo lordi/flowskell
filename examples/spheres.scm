@@ -5,7 +5,7 @@
         (scale (sin n))
         (scale 0.15 0.15 0.15)
         (color (hsv (* (cos (/ n 10)) 360)))
-        (make-sphere)
+        (draw-sphere)
     (pop)
     ; (scale 0.15 0.15 0.15)
     (rotate 30.0 (vector 0.0 0.5 (cos (* (/ (secs) 10.0) 10))))

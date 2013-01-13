@@ -15,7 +15,7 @@ intToGLfloat :: Float -> GLfloat
 intToGLfloat x = realToFrac x
 togl = intToGLfloat . realToFrac
 
-makeTeapot [] = do
+drawTeapot [] = do
     renderObject Solid (Teapot 1)
     return (Bool True)
 
@@ -84,8 +84,8 @@ setColor r g b = do
     materialAmbient Front $= c
     materialSpecular Front $= c
 
-makeGrid :: [LispVal] -> IO LispVal
-makeGrid [] = do
+drawGrid :: [LispVal] -> IO LispVal
+drawGrid [] = do
     setColor 1 1 1
     lineWidth $= 0.5
     mapM (\c -> do
@@ -115,8 +115,8 @@ makeGrid [] = do
             ) [(1,0,0),(0,1,0),(0,0,1)]
     return $ Bool True
 
-makeCube :: [LispVal] -> IO LispVal
-makeCube [] = let nfaces = zip n faces
+drawCube :: [LispVal] -> IO LispVal
+drawCube [] = let nfaces = zip n faces
           in do mapM (\(n, [v0, v1, v2, v3]) -> do
                         renderPrimitive Quads $ do
                           normal n
@@ -126,16 +126,16 @@ makeCube [] = let nfaces = zip n faces
                           vertex v3) nfaces
                 return $ Bool True
 
-makeSphere :: [LispVal] -> IO LispVal
-makeSphere [] = do
+drawSphere :: [LispVal] -> IO LispVal
+drawSphere [] = do
          renderObject Solid (Sphere' 1 15 15)
          return $ Bool True
 
 glIOPrimitives = [
-                   ("make-cube", makeCube),
-                   ("make-grid", makeGrid),
-                   ("make-teapot", makeTeapot),
-                   ("make-sphere", makeSphere),
+                   ("draw-cube", drawCube),
+                   ("draw-grid", drawGrid),
+                   ("draw-teapot", drawTeapot),
+                   ("draw-sphere", drawSphere),
 
                    ("color", doColor),
                    ("scale", doScale),
