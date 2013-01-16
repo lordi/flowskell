@@ -131,11 +131,17 @@ drawSphere [] = do
          renderObject Solid (Sphere' 1 15 15)
          return $ Bool True
 
+drawTorus :: [LispVal] -> IO LispVal
+drawTorus [] = do
+         renderObject Solid (Torus 0.275 0.85 16 16)
+         return $ Bool True
+
 glIOPrimitives = [
                    ("draw-cube", drawCube),
                    ("draw-grid", drawGrid),
                    ("draw-teapot", drawTeapot),
                    ("draw-sphere", drawSphere),
+                   ("draw-torus", drawTorus), 
 
                    ("color", doColor),
                    ("scale", doScale),
