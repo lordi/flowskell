@@ -136,12 +136,26 @@ drawTorus [] = do
          renderObject Solid (Torus 0.275 0.85 16 16)
          return $ Bool True
 
+drawLine :: [LispVal] -> IO LispVal
+drawLine [Vector a, Vector b] =
+        let [Float x1, Float y1, Float z1] = elems a
+            [Float x2, Float y2, Float z2] = elems b
+        in do
+        -- renderPrimitive Line $ do
+        --    vertex (Vertex3 x1 y1 z1)
+        --    vertex (Vertex3 x2 y2 z2)
+        renderPrimitive Lines $ do
+            vertex (Vertex3 (togl x1) (togl y1) (togl z1) :: Vertex3 GLfloat)
+            vertex (Vertex3 (togl x2) (togl y2) (togl z2) :: Vertex3 GLfloat)
+        return $ Bool True
+
 glIOPrimitives = [
                    ("draw-cube", drawCube),
                    ("draw-grid", drawGrid),
                    ("draw-teapot", drawTeapot),
                    ("draw-sphere", drawSphere),
-                   ("draw-torus", drawTorus), 
+                   ("draw-torus", drawTorus),
+                   ("draw-line", drawLine),
 
                    ("color", doColor),
                    ("scale", doScale),
