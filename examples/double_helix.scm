@@ -23,8 +23,9 @@
 )
 (define every-frame
   (lambda ()
-    (scale 0.02)
-    (rotate -45.0 x-axis)
+    (scale 0.03)
+    (rotate 55.0 x-axis)
+    (rotate (* (secs) 10.0) x-axis)
     (rotate (* (sin (secs)) 360.0) z-axis)
-    (translate (vector 0.0 0.0 (* -10 2.0)))
+    (translate (vector 0.0 0.0 (* -14 2.0)))
     (spheres 20)))

@@ -3,6 +3,7 @@
 (define x-axis (vector 1.0 0.0 0.0))
 (define y-axis (vector 0.0 1.0 0.0))
 (define z-axis (vector 0.0 0.0 1.0))
+(define origin (vector 0.0 0.0 0.0))
 (define % modulo)
 (define half 0.5)
 (define quarter 0.25)

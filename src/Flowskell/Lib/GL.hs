@@ -128,7 +128,7 @@ drawCube [] = let nfaces = zip n faces
 
 drawSphere :: [LispVal] -> IO LispVal
 drawSphere [] = do
-         renderObject Solid (Sphere' 1 15 15)
+         renderObject Solid (Sphere' 1 10 10)
          return $ Bool True
 
 drawTorus :: [LispVal] -> IO LispVal
@@ -137,25 +137,23 @@ drawTorus [] = do
          return $ Bool True
 
 drawLine :: [LispVal] -> IO LispVal
-drawLine [Vector a, Vector b] =
+-- TODO generalize this
+drawLine [Vector a, Vector b] = 
         let [Float x1, Float y1, Float z1] = elems a
             [Float x2, Float y2, Float z2] = elems b
         in do
-        -- renderPrimitive Line $ do
-        --    vertex (Vertex3 x1 y1 z1)
-        --    vertex (Vertex3 x2 y2 z2)
         renderPrimitive Lines $ do
             vertex (Vertex3 (togl x1) (togl y1) (togl z1) :: Vertex3 GLfloat)
             vertex (Vertex3 (togl x2) (togl y2) (togl z2) :: Vertex3 GLfloat)
         return $ Bool True
 
 glIOPrimitives = [
+                   ("draw-line", drawLine),
                    ("draw-cube", drawCube),
-                   ("draw-grid", drawGrid),
-                   ("draw-teapot", drawTeapot),
                    ("draw-sphere", drawSphere),
                    ("draw-torus", drawTorus),
-                   ("draw-line", drawLine),
+                   ("draw-grid", drawGrid),
+                   ("draw-teapot", drawTeapot),
 
                    ("color", doColor),
                    ("scale", doScale),
