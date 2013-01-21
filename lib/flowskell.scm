@@ -19,3 +19,10 @@
 (define blue (vector 0.0 0.0 1.0))
 (define yellow (vector 1.0 1.0 0.0))
 
+; internal stuff
+(define *source* "")        ; source file of the current script
+(define *has-error* #f)     ; wether an error has occurred
+(define every-frame-entry-point
+    (lambda ()
+      (if (not *has-error*)
+        (every-frame))))

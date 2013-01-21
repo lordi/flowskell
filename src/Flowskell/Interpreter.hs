@@ -57,7 +57,10 @@ extractLispVal (Right val) = val
 extractLispVal (Left err) = Nil $ show err
 
 evalFrame env = do
-  evalLisp' env (List [Atom "every-frame"]) >>= \x -> case x of
+  evalLisp' env (List [Atom "every-frame-entry-point"]) >>= \x -> case x of
     Nil "" -> return ()
-    Nil error -> (putStrLn $ show error) >> return ()
+    Nil error -> do
+        putStrLn error
+        evalString env $ "(define *has-error* #t)"
+        return ()
     _ -> return ()
