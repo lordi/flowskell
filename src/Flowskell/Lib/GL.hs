@@ -153,14 +153,13 @@ drawTorus [] = do
          return $ Bool True
 
 drawLine :: [LispVal] -> IO LispVal
--- TODO generalize this
-drawLine [Vector a, Vector b] = 
-        let [Float x1, Float y1, Float z1] = elems a
-            [Float x2, Float y2, Float z2] = elems b
-        in do
-        renderPrimitive Lines $ do
-            vertex (Vertex3 (togl x1) (togl y1) (togl z1) :: Vertex3 GLfloat)
-            vertex (Vertex3 (togl x2) (togl y2) (togl z2) :: Vertex3 GLfloat)
+drawLine vecs = do
+        renderPrimitive LineStrip $ do
+            mapM_ (\v -> do
+                let Vector v' = v
+                    [Float x, Float y, Float z] = elems v'
+                vertex (Vertex3 (togl x) (togl y) (togl z) :: Vertex3 GLfloat)
+                ) vecs
         return $ Bool True
 
 glIOPrimitives = [

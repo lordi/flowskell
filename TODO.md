@@ -1,6 +1,6 @@
 GL:
 
- * more GL object primitives: line, sphere, pyramid
+ * more GL object primitives: ~~line~~, ~~sphere~~, pyramid
  * Collect ideas/implement Flowskell.Lib.Glitch (distortion effects, etc)
  * Textures
  * Shaders! (local and global (glow, blur)) http://wiki.delphigl.com/index.php/Shadersammlung
