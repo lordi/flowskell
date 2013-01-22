@@ -1,6 +1,5 @@
 ; double helix
-(define spheres
-  (lambda (n)
+(define (spheres n)
     (rotate -30.0 z-axis)
     (translate (vector 0.0 0.0 2.0))
     (push)
@@ -18,14 +17,11 @@
             (draw-sphere)
         (pop)
     (pop)
-    (if (> n 0) (spheres (- n 1)))
-  )
-)
-(define every-frame
-  (lambda ()
+    (if (> n 0) (spheres (- n 1))))
+(define (every-frame)
     (scale 0.03)
     (rotate 55.0 x-axis)
     (rotate (* (secs) 10.0) x-axis)
     (rotate (* (sin (secs)) 360.0) z-axis)
     (translate (vector 0.0 0.0 (* -14 2.0)))
-    (spheres 20)))
+    (spheres 20))

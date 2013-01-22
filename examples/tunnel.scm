@@ -1,6 +1,5 @@
-; tail recursion test
-(define cubes
-  (lambda (n frac)
+; moving tunnel test
+(define (cubes n frac)
     (translate (vector 0.0 1.0 0.0))
     (color (hsv (* (- (+ n frac) (secs)) 25.0) 1.0 (/ n 60.0)))
     (push)
@@ -19,17 +18,13 @@
         (scale 0.5)
         (draw-cube)
     (pop)
-    (if (> n 0) (cubes (- n 1) frac))
-  )
-)
-(define init
-  (lambda ()
+    (if (> n 0) (cubes (- n 1) frac)))
+(define (init)
     (scale 0.65)
     (translate (vector 0.0 -1.0 0.0))
-    (rotate -80.0 x-axis)))
-(define every-frame
-  (lambda ()
+    (rotate -80.0 x-axis))
+(define (every-frame)
     (init)
     (translate (vector 0.0 -1.0 0.0))
     (translate (vector 0.0 (- 0 (% (secs) 1.0)) 0.0))
-    (cubes 30 (% (secs) 1.0))))
+    (cubes 30 (% (secs) 1.0)))

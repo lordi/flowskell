@@ -1,18 +1,16 @@
-; solar system (not to scale)
-(define tori (lambda (n)
+; donuts
+(define (tori n)
     (color yellow)
     (rotate (* (secs) 10.0) (vector 0.0 1.0 0.0))
     (rotate (* (secs) 10.0) (vector 1.0 0.0 0.0))
     (scale half)
     (color (hsv (* (% (+ (* (secs) 50.0)  (* n 50)) 360.0) 1.0) 0.5 0.45))
     (draw-torus)
-    (if (> n 1) (tori (- n 1)))
-    ))
+    (if (> n 1) (tori (- n 1))))
 
-(define every-frame
-  (lambda ()
+(define (every-frame)
     (rotate -45.0 x-axis)
     (display "\n")
     (scale (towards1 0.5 (towards1 0.5 (sin (secs)))))
     (scale 0.25)
-    (tori 10)))
+    (tori 10))
