@@ -1,11 +1,6 @@
 ;; slightly pulsating sierpinsky fractal
 (define (sierpinsky n)
-  (color (hsv (* n 50.0)))
-  (draw-line
-    (vector -1.0 -1.0 0.0)
-    (vector 0.0 1.0 0.0)
-    (vector 1.0 -1.0 0.0)
-    (vector -1.0 -1.0 0.0))
+  (draw-triangle)
   (translate (vector 0.0 0.0 (+ (/ (sin (secs)) 10.0) 0.0)))
   (scale (+ (/ (sin (secs)) 60.0) 0.5))
   (push)
@@ -19,8 +14,14 @@
   (push)
     (translate (vector 1.0 -1.0 0.0))
     (if (> n 0) (sierpinsky (- n 1)))
-  (pop)
-)
+  (pop))
+
+(define (draw-triangle)
+  (draw-line
+    (vector -1.0 -1.0 0.0)
+    (vector 0.0 1.0 0.0)
+    (vector 1.0 -1.0 0.0)
+    (vector -1.0 -1.0 0.0)))
 
 (define (init)
   (scale 0.5)

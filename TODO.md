@@ -11,8 +11,9 @@ Scheme:
 
  * midi input
  * ~~unify (vector 0 0 0) stuff, then implement HSV coloring~~
+ * implement vector functions like vmul, vadd, ...
  * fix float error
- * scheme compilation instead of evaluation
+ * scheme compilation to AST instead of evaluation
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
 
 Viewer:
@@ -21,6 +22,8 @@ Viewer:
  * optional code, fps display
  * live code reloading
 
-Other:
+Audio input:
+ * implement Jack capture
 
+Other:
  * Write tests that verify that no example contains errors
