@@ -14,4 +14,4 @@ Run Flowskell
 Documentation
 -------------
 
-A rudimentary [command reference](/lordi/flowskell/doc/commands.md) exists, as well as some [examples](/lordi/flowskell/examples).
+A rudimentary [command reference](/lordi/flowskell/blob/master/doc/commands.md) exists, as well as some [examples](/lordi/flowskell/tree/master/examples).
