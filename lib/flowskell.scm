@@ -12,10 +12,16 @@
   (lambda (scale n)
     (+ scale (* n scale))))
 
+; vector helprs
+; TODO: check for case vlen == 0
+(define (vnorm vec)
+  (vmul (/ 1 (vlen vec)) vec))
+
 ; random helpers
 (define (rndf) (* (random 10000) 0.0001))
 (define (crndf) (* (- (rndf) 0.5) 2))
 (define (vrnd) (vector (crndf) (crndf) (crndf)))
+(define (vrndn) (vnorm (vrnd)))
 
 ; colors
 (define white (vector 1.0 1.0 1.0))

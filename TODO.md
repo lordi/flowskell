@@ -11,7 +11,7 @@ Scheme:
 
  * midi input
  * ~~unify (vector 0 0 0) stuff, then implement HSV coloring~~
- * implement vector functions like vmul, vadd, ...
+ * ~~implement vector functions like vmul, vadd, ...~~
  * fix float error
  * scheme compilation to AST instead of evaluation
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
