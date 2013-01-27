@@ -41,3 +41,32 @@ Scales current coordinate system.
 `rotate deg v`
 
 Rotates current coordinate system by `deg` degrees around the axis described by vector `v`.
+
+## Math
+
+`vmul f v`
+
+Multiply every element in vector `v` by `f`.
+
+`vadd f v`
+`vadd v1 v2`
+
+Add `f` to every element in vector `v`, or add two vectors `v1` and `v2`.
+
+## Random
+
+`rnd n`
+
+Random number in the range 0 to `n`.
+
+`rndf`
+
+Random number in the range 0 to 1.
+
+`crnf`
+
+Random number in the range -1 to 1.
+
+`vrnd`
+
+Return a random, three-dimensional vector of float numbers in the range -1 to 1.

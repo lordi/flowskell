@@ -12,13 +12,21 @@
   (lambda (scale n)
     (+ scale (* n scale))))
 
+; random helpers
+(define (rndf) (* (random 10000) 0.0001))
+(define (crndf) (* (- (rndf) 0.5) 2))
+(define (vrnd) (vector (crndf) (crndf) (crndf)))
+
+; colors
 (define white (vector 1.0 1.0 1.0))
 (define gray (vector 0.5 0.5 0.5))
 (define black (vector 0.0 0.0 0.0))
 (define red (vector 1.0 0.0 0.0))
 (define green (vector 0.0 1.0 0.0))
 (define blue (vector 0.0 0.0 1.0))
-(define yellow (vector 1.0 1.0 0.0))
+(define yellow (vadd red green))
+(define magenta (vadd red blue))
+(define cyan (vadd green blue))
 
 ; internal stuff
 (define *source* "")        ; source file of the current script

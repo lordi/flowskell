@@ -12,13 +12,14 @@ import Flowskell.Lib.GL (glIOPrimitives)
 import Flowskell.Lib.Random (randomIOPrimitives)
 import Flowskell.Lib.Time (timeIOPrimitives)
 import Flowskell.Lib.Color (colorIOPrimitives)
+import Flowskell.Lib.Math (mathIOPrimitives)
 
 import Paths_Flowskell
 
 primitives :: [ ((String, String), LispVal) ]
 primitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) other
                 where makeThrowErrorFunc f obj = liftIO $ f obj
-                      other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives
+                      other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives ++ mathIOPrimitives
 
 initSchemeEnv filename = do
   stdlib <- getDataFileName "lib/stdlib.scm"
