@@ -6,10 +6,6 @@
 
 Draws the unit cube with the current color.
 
-`draw-grid`
-
-Draws a grid through the XY-plane and colored coordinate axis (Red=x axis, Green=y axis, Blue=z axis). This is helpful for debugging as it can easily show the current transformation.
-
 `draw-sphere`
 
 Draws a sphere.
@@ -18,9 +14,17 @@ Draws a sphere.
 
 Draws a torus (donut).
 
+`draw-plane`
+
+Draws a square in the xy plane.
+
 `draw-teapot`
 
 Draws the beloved OpenGL teapot.
+
+`draw-grid`
+
+Draws a grid through the xy plane and the three coordinate axis in a distinct color (Red=x axis, Green=y axis, Blue=z axis). This is helpful for debugging as it can easily show the current transformation.
 
 ## Transformations
 
