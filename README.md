@@ -1,7 +1,7 @@
 Flowskell - Fluxus clone in Haskell
 ===================================
 
-Flowskell allows you to write visual animations using the Scheme language. It is driven by OpenGL and the husk-scheme interpreter.
+Flowskell allows you to write visual animations using the Scheme language. It is driven by OpenGL and the [husk-scheme](https://github.com/justinethier/husk-scheme) interpreter.
 
 Run Flowskell
 -------------
@@ -14,4 +14,4 @@ Run Flowskell
 Documentation
 -------------
 
-A rudimentary [command reference](/lordi/doc/commands.md) exists, as well as some [examples](/lordi/flowskell/examples).
+A rudimentary [command reference](/lordi/flowskell/doc/commands.md) exists, as well as some [examples](/lordi/flowskell/examples).
