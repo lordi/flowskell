@@ -16,14 +16,15 @@ import Flowskell.Lib.Math (mathIOPrimitives)
 
 import Paths_Flowskell
 
-primitives :: [ ((String, String), LispVal) ]
-primitives = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) other
-                where makeThrowErrorFunc f obj = liftIO $ f obj
-                      other = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives ++ mathIOPrimitives
+defaultPrimitives = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives ++ mathIOPrimitives
 
-initSchemeEnv filename = do
+mkPrimitiveList b = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) b
+                where makeThrowErrorFunc f obj = liftIO $ f obj
+
+initSchemeEnv extraPrimitives filename = do
   stdlib <- getDataFileName "lib/stdlib.scm"
   stdlib2 <- getDataFileName "lib/flowskell.scm"
+  let primitives = mkPrimitiveList $ defaultPrimitives ++ extraPrimitives
   env <- primitiveBindings >>= flip extendEnv primitives
   let files = [stdlib, stdlib2, filename]
   evalString env $ "(define *source* \"" ++ (escapeBackslashes filename) ++ "\")"

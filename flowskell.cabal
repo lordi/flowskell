@@ -1,5 +1,5 @@
 Name: Flowskell
-Version: 0.0.4
+Version: 0.0.5
 Description: OpenGL livecoding enviroment (fluxus clone)
 License: GPL
 License-file: LICENSE
@@ -15,4 +15,5 @@ Executable flowskell
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: husk-scheme, colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL
-  Ghc-Options: -threaded
+  Build-Depends: transformers, explicit-exception, jack, unix
+  Ghc-Options: -O2 -threaded +RTS -N2

@@ -23,7 +23,7 @@ Viewer:
  * live code reloading
 
 Audio input:
- * implement Jack capture
+ * ~~implement Jack capture~~
 
 Other:
  * Write tests that verify that no example contains errors
