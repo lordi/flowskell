@@ -6,7 +6,9 @@ import Graphics.Rendering.GLU.Raw
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame, evalLisp')
 import Language.Scheme.Types (LispVal (Atom, String))
+#ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
+#endif
 
 import Control.Concurrent
 import Control.Monad hiding (forM_)
@@ -31,7 +33,11 @@ viewer = let light0 = Light 0 in do
   depthFunc $= Just Less
   angle <- newIORef (0.0::GLfloat)
 
+#ifdef USE_JACK
   jackIOPrimitives <- initJack
+#else
+  jackIOPrimitives <- return []
+#endif
 
   let extraPrimitives = jackIOPrimitives
       initFunc = (initSchemeEnv extraPrimitives)
