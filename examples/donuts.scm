@@ -10,7 +10,6 @@
 
 (define (every-frame)
     (rotate -45.0 x-axis)
-    (display "\n")
     (scale (towards1 0.5 (towards1 0.5 (sin (secs)))))
-    (scale 0.25)
+    (scale 0.75)
     (tori 10))

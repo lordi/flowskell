@@ -1,7 +1,7 @@
 Flowskell - Fluxus clone in Haskell
 ===================================
 
-Flowskell allows you to write visual animations using the Scheme language. It is driven by OpenGL and the [husk-scheme](https://github.com/justinethier/husk-scheme) interpreter.
+Flowskell allows you to write visual animations using the Scheme language. It is inspired by the [fluxus project](http://www.pawfal.org/fluxus/) and driven by OpenGL and the [husk-scheme](https://github.com/justinethier/husk-scheme) interpreter.
 
 Run Flowskell
 -------------
@@ -9,7 +9,8 @@ Run Flowskell
     cabal configure
     cabal build
     cabal install
-    flowskell examples/recursion.scm
+    export PATH=$PATH:~/.cabal/bin
+    flowskell examples/donuts.scm
 
 Documentation
 -------------
