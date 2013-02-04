@@ -3,7 +3,7 @@ import Control.Monad
 import Control.Monad.Error
 
 import Language.Scheme.Core
-import Language.Scheme.Types hiding (extractLispVal)
+import Language.Scheme.Types
 import Language.Scheme.Parser
 import Language.Scheme.Variables
 import Language.Scheme.Compiler
@@ -48,15 +48,15 @@ initSchemeEnv extraPrimitives filename = do
 -- husk-scheme commit: 191c113864b2ee1807d9f01e4395357ad053aea6
 evalLisp' :: Env -> LispVal -> IO LispVal
 evalLisp' env lisp = do
-  v <- runErrorT (evalLisp env lisp) >>= return . extractLispVal
+  v <- runErrorT (evalLisp env lisp) >>= return . extractLispVal'
   return v
 
 -- This function has been copied from the husk-scheme git repository
 -- because it is likely to change in the future
 -- husk-scheme commit: 191c113864b2ee1807d9f01e4395357ad053aea6
-extractLispVal :: ThrowsError LispVal -> LispVal
-extractLispVal (Right val) = val
-extractLispVal (Left err) = Nil $ show err
+extractLispVal' :: ThrowsError LispVal -> LispVal
+extractLispVal' (Right val) = val
+extractLispVal' (Left err) = Nil $ show err
 
 evalFrame env = do
   evalLisp' env (List [Atom "every-frame-entry-point"]) >>= \x -> case x of
