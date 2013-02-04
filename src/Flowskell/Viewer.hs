@@ -4,7 +4,8 @@ import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.GLU.Raw
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Flowskell.Interpreter (initSchemeEnv, evalFrame, evalLisp')
+import Flowskell.Interpreter (initSchemeEnv, evalFrame)
+import Language.Scheme.Core (evalLisp')
 import Language.Scheme.Types (LispVal (Atom, String))
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -89,7 +90,7 @@ keyboardAct a _ _ (SpecialKey KeyRight) Down = do
 keyboardAct a envRef reinitFunc (SpecialKey KeyF5) Down = do
   env <- get envRef
   evalLisp' env (Atom "*source*") >>= \x -> case x of
-    String source -> (reinitFunc source) >>= writeIORef envRef
+    Right (String source) -> (reinitFunc source) >>= writeIORef envRef
     _ -> return ()
 
 keyboardAct _ _ _ _ _ = return ()
