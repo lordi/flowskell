@@ -24,6 +24,7 @@ Viewer:
 
 Audio input:
  * ~~implement Jack capture~~
+ * fourier analysis/harmonic analysis
 
 Other:
  * Write tests that verify that no example contains errors
