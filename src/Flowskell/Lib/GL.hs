@@ -8,12 +8,15 @@ import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock
 import Data.Time.Calendar
 import Data.Array
-
 import Language.Scheme.Types
+
+import Flowskell.SchemeUtils
 
 intToGLfloat :: Float -> GLfloat
 intToGLfloat x = realToFrac x
 togl = intToGLfloat . realToFrac
+
+extractNumToGL = in
 
 drawTeapot [] = do
     renderObject Solid (Teapot 1)
@@ -31,7 +34,7 @@ doColor [Vector v] =
 
 doTranslate :: [LispVal] -> IO LispVal
 doTranslate [Vector v] =
-    let [Float x, Float y, Float z] = elems v in do
+    let [x, y, z] = map extractNum (elems v) in do
     translate $ Vector3 (togl x) (togl y) (togl z)
     return (Bool True)
 
@@ -44,8 +47,8 @@ doScale [Float x, Float y, Float z] = do
     return (Bool True)
 
 doRotate :: [LispVal] -> IO LispVal
-doRotate [Float a, Vector v] = do
-    let [Float x, Float y, Float z] = elems v in do
+doRotate [a, Vector v] = do
+    let [x, y, z] = map extractNumToGL (elems v) in do
     rotate (togl a) $ Vector3 (togl x) (togl y) (togl z)
     return (Bool True)
 

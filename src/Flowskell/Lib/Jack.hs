@@ -81,7 +81,7 @@ setProcess ::
     Sync.ExceptionalT e IO ()
 setProcess wfd client input =
     flip (Jack.setProcess client) nullPtr =<<
-    (Trans.lift $ Jack.makeProcess $
+    (Trans.lift $ Jack.mkProcess $
      wrapFun wfd input)
 
 wrapFun ::
