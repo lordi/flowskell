@@ -12,15 +12,8 @@ import Language.Scheme.Types
 
 import Flowskell.SchemeUtils
 
-intToGLfloat :: Float -> GLfloat
-intToGLfloat x = realToFrac x
-togl = intToGLfloat . realToFrac
-
-extractNumToGL = in
-
-drawTeapot [] = do
-    renderObject Solid (Teapot 1)
-    return (Bool True)
+extractGLfloat :: LispVal -> GLfloat
+extractGLfloat = realToFrac . extractFloat
 
 doIdentity [] = loadIdentity >> return (Bool True)
 doPush [] = glPushMatrix >> return (Bool True)
@@ -28,28 +21,30 @@ doPop [] = glPopMatrix >> return (Bool True)
 
 doColor :: [LispVal] -> IO LispVal
 doColor [Vector v] =
-    let [Float r, Float g, Float b] = elems v in do
-    setColor (realToFrac r) (realToFrac g) (realToFrac b)
+    let [r, g, b] = map extractGLfloat (elems v) in do
+    setColor r g b
     return (Bool True)
 
 doTranslate :: [LispVal] -> IO LispVal
 doTranslate [Vector v] =
-    let [x, y, z] = map extractNum (elems v) in do
-    translate $ Vector3 (togl x) (togl y) (togl z)
+    let [x, y, z] = map extractGLfloat (elems v) in do
+    translate $ Vector3 x y z
     return (Bool True)
 
 doScale :: [LispVal] -> IO LispVal
-doScale [Float r] = do
-    scale (togl r) (togl r) (togl r)
+doScale [r] = do
+    let v = extractGLfloat r
+    scale v v v
     return (Bool True)
-doScale [Float x, Float y, Float z] = do
-    scale (togl x) (togl y) (togl z)
+doScale lst = do
+    let [x, y, z] = map extractGLfloat lst
+    scale x y z
     return (Bool True)
 
 doRotate :: [LispVal] -> IO LispVal
 doRotate [a, Vector v] = do
-    let [x, y, z] = map extractNumToGL (elems v) in do
-    rotate (togl a) $ Vector3 (togl x) (togl y) (togl z)
+    let [x, y, z] = map extractGLfloat (elems v)
+    rotate (extractGLfloat a) $ Vector3 x y z
     return (Bool True)
 
 n :: [Normal3 GLfloat]
@@ -155,13 +150,17 @@ drawTorus [] = do
          renderObject Solid (Torus 0.275 0.85 16 16)
          return $ Bool True
 
+drawTeapot [] = do
+        renderObject Solid (Teapot 1)
+        return (Bool True)
+
 drawLine :: [LispVal] -> IO LispVal
 drawLine vecs = do
         renderPrimitive LineStrip $ do
             mapM_ (\v -> do
                 let Vector v' = v
-                    [Float x, Float y, Float z] = elems v'
-                vertex (Vertex3 (togl x) (togl y) (togl z) :: Vertex3 GLfloat)
+                    [x, y, z] = map extractGLfloat (elems v')
+                vertex (Vertex3 x y z :: Vertex3 GLfloat)
                 ) vecs
         return $ Bool True
 
