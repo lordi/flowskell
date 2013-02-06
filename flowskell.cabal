@@ -10,7 +10,7 @@ Cabal-Version: >=1.2
 Data-Files: lib/*.scm
 
 Flag JACK
-  Description: Enable JACK support (requires jack bindings, darcs version)
+  Description: Enable JACK support (experimental)
   Default: False
 
 Executable flowskell
@@ -25,4 +25,4 @@ Executable flowskell
   if flag(JACK)
     Ghc-Options: -O2 -threaded +RTS -N2 -RTS
     Cpp-Options: -DUSE_JACK
-    Build-Depends: jack >= 0.6, transformers, explicit-exception, unix
+    Build-Depends: jack >= 0.7, transformers, explicit-exception, unix
