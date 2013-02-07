@@ -10,7 +10,7 @@
             (draw-sphere)
         (pop)
         (color white)
-        (draw-line (vector -3 0 0) (vector 3 0 0))
+        (draw-line (list (vector -3 0 0) (vector 3 0 0)))
         (push)
             (translate (vector 3 0 0))
             (scale 0.5)

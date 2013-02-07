@@ -155,7 +155,7 @@ drawTeapot [] = do
         return (Bool True)
 
 drawLine :: [LispVal] -> IO LispVal
-drawLine vecs = do
+drawLine [List vecs] = do
         renderPrimitive LineStrip $ do
             mapM_ (\v -> do
                 let Vector v' = v

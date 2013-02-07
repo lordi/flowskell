@@ -26,6 +26,11 @@ Draw the beloved OpenGL teapot.
 
 Draw a grid through the xy plane and the three coordinate axis in a distinct color (Red=x axis, Green=y axis, Blue=z axis). This is helpful for debugging as it can easily show the current transformation.
 
+`draw-line vlist`
+
+Draws lines through the points given in the list `vlist`.
+
+
 ## Transformations
 
 `translate v`

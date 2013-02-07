@@ -18,10 +18,11 @@
 
 (define (draw-triangle)
   (draw-line
-    (vector -1 -1 0)
-    (vector 0 1 0)
-    (vector 1 -1 0)
-    (vector -1 -1 0)))
+    (list
+        (vector -1 -1 0)
+        (vector 0 1 0)
+        (vector 1 -1 0)
+        (vector -1 -1 0))))
 
 (define (init)
   (scale 0.5)
