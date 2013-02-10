@@ -49,7 +49,7 @@ initJack = do
     -- For now, both proccesses communicate with a pipe.
     -- TODO: Exit process when pipe is closed/broken
     (rfd, wfd) <- createPipe
-    forkProcess $ nice (-10) >> capture wfd "Flowskell" ["input"]
+    forkProcess $ capture wfd "Flowskell" ["input"]
 
     -- The following fork just creates a thread which will read from the pipe
     -- and store the result in an MVar.
@@ -81,7 +81,7 @@ setProcess ::
     Sync.ExceptionalT e IO ()
 setProcess wfd client input =
     flip (Jack.setProcess client) nullPtr =<<
-    (Trans.lift $ Jack.mkProcess $
+    (Trans.lift $ Jack.makeProcess $
      wrapFun wfd input)
 
 wrapFun ::
