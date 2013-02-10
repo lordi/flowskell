@@ -7,8 +7,15 @@ import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Flowskell.Interpreter (initSchemeEnv, evalFrame, evalLisp')
+import Flowskell.Interpreter (initSchemeEnv, evalFrame)
+import Language.Scheme.Core (evalLisp')
 import Language.Scheme.Types (LispVal (Atom, String))
+#ifdef USE_JACK
+import Flowskell.Lib.Jack (initJack)
+#endif
+
+import Control.Concurrent
+import Control.Monad hiding (forM_)
 
 import Foreign ( withArray )
 
@@ -82,13 +89,22 @@ viewer = let light0 = Light 0 in do
   when (isJust texName) $ textureBinding Texture2D $= texName
 
   angle <- newIORef (0.0::GLfloat)
-  env <- initSchemeEnv filename
+
+#ifdef USE_JACK
+  jackIOPrimitives <- initJack
+#else
+  jackIOPrimitives <- return []
+#endif
+
+  let extraPrimitives = jackIOPrimitives
+      initFunc = (initSchemeEnv extraPrimitives)
+  env <- initFunc filename
   envRef <- newIORef env
   writeIORef envRef env
   displayCallback $= display angle envRef
   idleCallback $= Just idle
   reshapeCallback $= Just (reshape angle)
-  keyboardMouseCallback $= Just (keyboardMouse angle envRef)
+  keyboardMouseCallback $= Just (keyboardMouse angle envRef initFunc)
   mainLoop
 
 reshape angle s@(Size w h) = do
@@ -117,23 +133,23 @@ display angle envRef = do
 idle = do
   postRedisplay Nothing
 
-keyboardAct a _ (SpecialKey KeyLeft) Down = do
+keyboardAct a _ _ (SpecialKey KeyLeft) Down = do
   a' <- get a
   writeIORef a (a' + 5)
 
-keyboardAct a _ (SpecialKey KeyRight) Down = do
+keyboardAct a _ _ (SpecialKey KeyRight) Down = do
   a' <- get a
   writeIORef a (a' - 5)
 
 -- |Reload scheme source by initialising a new environment and storing it in
 --  envRef.
-keyboardAct a envRef (SpecialKey KeyF5) Down = do
+keyboardAct a envRef reinitFunc (SpecialKey KeyF5) Down = do
   env <- get envRef
   evalLisp' env (Atom "*source*") >>= \x -> case x of
-    String source -> initSchemeEnv source >>= writeIORef envRef
+    Right (String source) -> (reinitFunc source) >>= writeIORef envRef
     _ -> return ()
 
-keyboardAct _ _ _ _ = return ()
+keyboardAct _ _ _ _ _ = return ()
 
-keyboardMouse angle envRef key state modifiers position = do
-  keyboardAct angle envRef key state
+keyboardMouse angle envRef reinitFunc key state modifiers position = do
+  keyboardAct angle envRef reinitFunc key state

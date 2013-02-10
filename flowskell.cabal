@@ -1,5 +1,5 @@
 Name: Flowskell
-Version: 0.0.3
+Version: 0.0.6
 Description: OpenGL livecoding enviroment (fluxus clone)
 License: GPL
 License-file: LICENSE
@@ -9,10 +9,20 @@ Build-Type: Simple
 Cabal-Version: >=1.2
 Data-Files: lib/*.scm
 
+Flag JACK
+  Description: Enable JACK support (experimental)
+  Default: False
+
 Executable flowskell
   Main-is: Main.hs
   Hs-Source-Dirs: src
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
-  Build-Depends: husk-scheme, colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL
-  Ghc-Options: -threaded
+  Build-Depends: colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL
+  Build-Depends: husk-scheme >= 3.6.3
+  Ghc-Options: -O2 -threaded
+
+  if flag(JACK)
+    Ghc-Options: -O2 -threaded +RTS -N2 -RTS
+    Cpp-Options: -DUSE_JACK
+    Build-Depends: jack >= 0.7, transformers, explicit-exception, unix
