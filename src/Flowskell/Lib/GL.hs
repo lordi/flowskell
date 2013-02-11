@@ -118,13 +118,13 @@ drawCube [] = let nfaces = zip n faces
           in do mapM (\(n, [v0, v1, v2, v3]) -> do
                         renderPrimitive Quads $ do
                           normal n
-                          texCoord (TexCoord2 0 0 :: TexCoord2 GLfloat)
-                          vertex v0
-                          texCoord (TexCoord2 0 1 :: TexCoord2 GLfloat)
-                          vertex v1
-                          texCoord (TexCoord2 1 1 :: TexCoord2 GLfloat)
-                          vertex v2
                           texCoord (TexCoord2 1 0 :: TexCoord2 GLfloat)
+                          vertex v0
+                          texCoord (TexCoord2 1 1 :: TexCoord2 GLfloat)
+                          vertex v1
+                          texCoord (TexCoord2 0 1 :: TexCoord2 GLfloat)
+                          vertex v2
+                          texCoord (TexCoord2 0 0 :: TexCoord2 GLfloat)
                           vertex v3) nfaces
                 return $ Bool True
 
@@ -134,10 +134,10 @@ drawPlane [] = let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
                    in do
                 renderPrimitive Quads $ do
                     normal $ (Normal3 1 0 0 :: Normal3 GLfloat)
-                    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
-                    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
-                    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
-                    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+                    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
+                    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
+                    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0       1.0    0.0     )
+                    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
                 return $ Bool True
 
 drawSphere :: [LispVal] -> IO LispVal

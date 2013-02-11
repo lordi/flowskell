@@ -13,11 +13,17 @@ import Language.Scheme.Types (LispVal (Atom, String))
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
 #endif
+#ifdef USE_TEXTURES
+import Flowskell.Lib.Textures (initTextures)
+#endif
+
+import Flowskell.TextureUtils (getAndCreateTexture, loadImage)
 
 import Control.Concurrent
 import Control.Monad hiding (forM_)
 
 import Foreign ( withArray )
+
 
 imageSize :: TextureSize2D
 imageSize = TextureSize2D 64 64
@@ -37,28 +43,17 @@ withImage act =
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
 
-
   -- Framebuffer test
-  fbo <- genObjectNames 1
-  let fbName = head fbo
-  bindFramebuffer Framebuffer $= fbName
+  --fbo <- genObjectNames 1
+  --let fbName = head fbo
+  --bindFramebuffer Framebuffer $= fbName
 
-  exts <- get glExtensions
-  putStrLn $ show exts
-  {- texName' <- if "GL_EXT_texture_object" `elem` exts
-                 then fmap listToMaybe $ genObjectNames 1
-                 else return Nothing -}
-  texName <- fmap listToMaybe $ genObjectNames 1
-  when (isJust texName) $ textureBinding Texture2D $= texName
-  putStrLn $ show texName
-
-  framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing (fromJust texName) 0
-
+  --exts <- get glExtensions
+  --putStrLn $ show exts
   -- /Framebuffer test
 
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow progname
-
 
   ambient light0 $= Color4 0.2 0.2 0.2 1
   diffuse light0 $= Color4 1 1 1 0.6
@@ -75,19 +70,6 @@ viewer = let light0 = Light 0 in do
   depthFunc $= Just Less
   --cullFace $= Just Front
 
-  --let fb = (FramebufferObject 1) :: FramebufferObject
-
-
-  -- Texture test
-  textureFunction $= Decal
-  textureWrapMode Texture2D S $= (Repeated, Repeat)
-  textureWrapMode Texture2D T $= (Repeated, Repeat)
-  textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
-  --withImage $ texImage2D Nothing NoProxy 0 RGB' imageSize 0
-  texture Texture2D $= Enabled
-  -- /Texture test
-  when (isJust texName) $ textureBinding Texture2D $= texName
-
   angle <- newIORef (0.0::GLfloat)
 
 #ifdef USE_JACK
@@ -96,7 +78,13 @@ viewer = let light0 = Light 0 in do
   jackIOPrimitives <- return []
 #endif
 
-  let extraPrimitives = jackIOPrimitives
+#ifdef USE_TEXTURES
+  texturesIOPrimitives <- initTextures
+#else
+  texturesIOPrimitives <- return []
+#endif
+
+  let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives
       initFunc = (initSchemeEnv extraPrimitives)
   env <- initFunc filename
   envRef <- newIORef env

@@ -13,6 +13,10 @@ Flag JACK
   Description: Enable JACK support (experimental)
   Default: False
 
+Flag Textures
+  Description: Enable OpenGL textures
+  Default: True
+
 Executable flowskell
   Main-is: Main.hs
   Hs-Source-Dirs: src
@@ -26,3 +30,7 @@ Executable flowskell
     Ghc-Options: -O2 -threaded +RTS -N2 -RTS
     Cpp-Options: -DUSE_JACK
     Build-Depends: jack >= 0.7, transformers, explicit-exception, unix
+
+  if flag(Textures)
+    Build-Depends: JuicyPixels, vector
+    Cpp-Options: -DUSE_TEXTURES
