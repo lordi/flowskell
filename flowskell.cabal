@@ -1,5 +1,5 @@
 Name: Flowskell
-Version: 0.0.6
+Version: 0.0.7
 Description: OpenGL livecoding enviroment (fluxus clone)
 License: GPL
 License-file: LICENSE
@@ -12,6 +12,11 @@ Data-Files: lib/*.scm
 Flag JACK
   Description: Enable JACK support (experimental)
   Default: False
+
+Flag Textures
+  Description: Enable OpenGL textures
+  Default: True
+  Manual: True
 
 Executable flowskell
   Main-is: Main.hs
@@ -26,3 +31,7 @@ Executable flowskell
     Ghc-Options: -O2 -threaded +RTS -N2 -RTS
     Cpp-Options: -DUSE_JACK
     Build-Depends: jack >= 0.7, transformers, explicit-exception, unix
+
+  if flag(Textures)
+    Build-Depends: JuicyPixels, vector
+    Cpp-Options: -DUSE_TEXTURES
