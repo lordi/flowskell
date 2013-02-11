@@ -1,5 +1,5 @@
 Name: Flowskell
-Version: 0.0.6
+Version: 0.0.7
 Description: OpenGL livecoding enviroment (fluxus clone)
 License: GPL
 License-file: LICENSE
@@ -16,6 +16,7 @@ Flag JACK
 Flag Textures
   Description: Enable OpenGL textures
   Default: True
+  Manual: True
 
 Executable flowskell
   Main-is: Main.hs
