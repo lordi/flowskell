@@ -21,10 +21,11 @@ setTexture txtLstRef [Number n] = do
                         -- TODO: check bounds
                         textureBinding Texture2D $= txtLst !! (fromIntegral n)
                         return (Number 1)
+setTexture txtLstRef [] = setTexture txtLstRef [Number 0]
 
 initTextures :: IO [(String, [LispVal] -> IO LispVal)]
 initTextures = do
-    txtLstRef <- newIORef []
+    txtLstRef <- newIORef [Nothing]
     return  [
         ("load-texture", loadTexture txtLstRef),
         ("texture", setTexture txtLstRef)
