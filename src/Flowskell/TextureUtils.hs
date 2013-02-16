@@ -13,6 +13,7 @@ import Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization
 import Graphics.UI.GLUT
 import Data.Word
 import Foreign.Marshal.Alloc
+import Foreign ( withArray )
 
 loadImage :: String -> IO ()
 loadImage path = do 
@@ -23,14 +24,51 @@ loadImage path = do
      (Right d) -> do image2Texture d
 
 image2Texture (ImageRGB8 (Image width height dat)) =
-  let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in
-  unsafeWith dat $ \ptr ->
-    texImage2D Nothing NoProxy 0 RGB8 size 0 (PixelData RGB UnsignedByte ptr)
+    let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in
+    unsafeWith dat $ \ptr ->
+        texImage2D Nothing NoProxy 0 RGB8 size 0 (PixelData RGB UnsignedByte ptr)
 
 image2Texture (ImageRGBA8 (Image width height dat)) =
-  let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in
-  unsafeWith dat $ \ptr ->
-    texImage2D Nothing NoProxy 0 RGBA8 size 0 (PixelData RGBA UnsignedByte ptr)
+    let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in
+    unsafeWith dat $ \ptr ->
+        texImage2D Nothing NoProxy 0 RGBA8 size 0 (PixelData RGBA UnsignedByte ptr)
+
+makeImage :: TextureSize2D -> (GLsizei -> GLsizei -> Color3 GLubyte)
+               -> (PixelData (Color3 GLubyte) -> IO ()) -> IO ()
+makeImage (TextureSize2D w h) f act =
+   withArray [ f i j |
+               i <- [ 0 .. w - 1 ],
+               j <- [ 0 .. h - 1 ] ] $
+   act . PixelData RGB UnsignedByte
+
+makeImageA :: TextureSize2D -> (GLsizei -> GLsizei -> Color4 GLubyte)
+               -> (PixelData (Color4 GLubyte) -> IO ()) -> IO ()
+makeImageA (TextureSize2D w h) f act =
+   withArray [ f i j |
+               i <- [ 0 .. w - 1 ],
+               j <- [ 0 .. h - 1 ] ] $
+   act . PixelData RGBA UnsignedByte
+
+createBlankTexture :: (Int, Int) -> IO (Maybe TextureObject)
+createBlankTexture (width, height) =
+    let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in do
+    [texName] <- genObjectNames 1  -- generate our texture.
+    textureBinding Texture2D $= Just texName  -- make our new texture the current texture.
+    textureFunction $= Decal
+    textureWrapMode Texture2D S $= (Repeated, Repeat)
+    textureWrapMode Texture2D T $= (Repeated, Repeat)
+    textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
+    texture Texture2D $= Enabled
+    setTextureSize texName size
+    return (Just texName)
+
+setTextureSize texName size = do
+    textureBinding Texture2D $= Just texName  -- make our new texture the current texture.
+    --makeImage size (\i _ -> Color3 0 0 0) $
+    --  texImage2D Nothing NoProxy 0 RGB8 size 0
+
+    makeImageA size (\i _ -> Color4 0 0 0 0) $
+      texImage2D Nothing NoProxy 0 RGBA8 size 0
 
 getAndCreateTexture :: String -> IO (Maybe TextureObject)
 getAndCreateTexture fileName = do

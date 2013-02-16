@@ -18,6 +18,11 @@ Flag Textures
   Default: True
   Manual: True
 
+Flag Shaders
+  Description: Enable OpenGL shaders
+  Default: True
+  Manual: True
+
 Executable flowskell
   Main-is: Main.hs
   Hs-Source-Dirs: src
@@ -35,3 +40,6 @@ Executable flowskell
   if flag(Textures)
     Build-Depends: JuicyPixels, vector
     Cpp-Options: -DUSE_TEXTURES
+
+  if flag(Shaders)
+    Cpp-Options: -DUSE_SHADERS

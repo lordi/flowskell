@@ -6,10 +6,11 @@ import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
+import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Core (evalLisp')
-import Language.Scheme.Types (LispVal (Atom, String))
+import Language.Scheme.Types (Env, LispVal (Atom, String))
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
 #endif
@@ -17,40 +18,63 @@ import Flowskell.Lib.Jack (initJack)
 import Flowskell.Lib.Textures (initTextures)
 #endif
 
-import Flowskell.TextureUtils (getAndCreateTexture, loadImage)
+import Graphics.Rendering.OpenGL.GL.Texturing.Environments
 
+import Flowskell.TextureUtils
+import Flowskell.ShaderUtils
 import Control.Concurrent
 import Control.Monad hiding (forM_)
 
 import Foreign ( withArray )
 
+-- TODO 
+-- Try to implement HasGetter/HasSetter for MVar instead IORef (Maybe ...)
+data State = State {
+    rotation :: IORef (Vector3 GLfloat),
+    environment :: IORef (Maybe Env),
+    blurFactor :: IORef GLfloat,
+#ifdef USE_TEXTURES
+    renderTexture :: IORef (Maybe TextureObject),
+    renderFramebuffer :: IORef (Maybe FramebufferObject),
+    lastRenderTexture :: IORef (Maybe TextureObject),
+    lastRenderFramebuffer :: IORef (Maybe FramebufferObject),
+#endif
+#ifdef USE_SHADERS
+    blurVShader :: IORef (Maybe VertexShader),
+    blurFShader :: IORef (Maybe FragmentShader),
+    blurProgram :: IORef (Maybe Program)
+#endif
+    }
 
-imageSize :: TextureSize2D
-imageSize = TextureSize2D 64 64
+makeState :: IO State
+makeState = do
+    environment' <- newIORef Nothing
+    rotation' <- newIORef (Vector3 0 0 (0 :: GLfloat))
+    blurFactor' <- newIORef 0.5
+    renderTexture' <- newIORef Nothing
+    lastRenderTexture' <- newIORef Nothing
+    renderFramebuffer' <- newIORef Nothing
+    lastRenderFramebuffer' <- newIORef Nothing
+    blurVShader' <- newIORef Nothing
+    blurFShader' <- newIORef Nothing
+    blurProgram' <- newIORef Nothing
+    return $ State {
+        environment = environment',
+        rotation = rotation',
+        blurFactor = blurFactor',
+        renderTexture = renderTexture',
+        lastRenderTexture = lastRenderTexture',
+        renderFramebuffer = renderFramebuffer',
+        lastRenderFramebuffer = lastRenderFramebuffer',
+        blurVShader = blurVShader',
+        blurFShader = blurFShader',
+        blurProgram = blurProgram'
+        }
 
-withImage :: (PixelData (Color3 GLubyte) -> IO ()) -> IO ()
-withImage act =
-   withArray [ Color3 (s (sin ti)) (s (cos (2 * tj))) (s (cos (ti + tj))) |
-               i <- [ 0 .. fromIntegral w - 1 ],
-               let ti = 2 * pi * i / fromIntegral w,
-               j <- [ 0 .. fromIntegral h - 1 ],
-               let tj = 2 * pi * j / fromIntegral h ] $
-   act . PixelData RGB UnsignedByte
-   where (TextureSize2D w h) = imageSize
-         s :: Double -> GLubyte
-         s x = truncate (127 * (1 + x))
 
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
 
-  -- Framebuffer test
-  --fbo <- genObjectNames 1
-  --let fbName = head fbo
-  --bindFramebuffer Framebuffer $= fbName
-
-  --exts <- get glExtensions
-  --putStrLn $ show exts
-  -- /Framebuffer test
 
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow progname
@@ -70,7 +94,7 @@ viewer = let light0 = Light 0 in do
   depthFunc $= Just Less
   --cullFace $= Just Front
 
-  angle <- newIORef (0.0::GLfloat)
+  state <- makeState
 
 #ifdef USE_JACK
   jackIOPrimitives <- initJack
@@ -79,7 +103,41 @@ viewer = let light0 = Light 0 in do
 #endif
 
 #ifdef USE_TEXTURES
-  texturesIOPrimitives <- initTextures
+  [fbo] <- genObjectNames 1
+  (Just fbTexture) <- createBlankTexture (1, 1)
+
+  [fbo2] <- genObjectNames 1
+  (Just fbTexture2) <- createBlankTexture (1, 1)
+
+  bindFramebuffer Framebuffer $= fbo
+  framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture 0
+
+  bindFramebuffer Framebuffer $= fbo2
+  framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture2 0
+
+  renderTexture state $= Just fbTexture
+  renderFramebuffer state $= Just fbo
+  lastRenderTexture state $= Just fbTexture2
+  lastRenderFramebuffer state $= Just fbo2
+
+#endif
+
+#ifdef USE_SHADERS
+
+  checkGLSLSupport
+  vs <- readAndCompileShader "shaders/fade.vert"
+  fs <- readAndCompileShader "shaders/fade.frag"
+  prg <- linkShaders [vs] [fs]
+
+  blurVShader state $= Just vs
+  blurFShader state $= Just fs
+  blurProgram state $= Just prg
+  --installBrickShaders [vs] [fs]
+
+#endif
+
+#ifdef USE_TEXTURES
+  texturesIOPrimitives <- initTextures fbTexture2
 #else
   texturesIOPrimitives <- return []
 #endif
@@ -87,15 +145,17 @@ viewer = let light0 = Light 0 in do
   let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives
       initFunc = (initSchemeEnv extraPrimitives)
   env <- initFunc filename
-  envRef <- newIORef env
-  writeIORef envRef env
-  displayCallback $= display angle envRef
+  environment state $= Just env
+  displayCallback $= display state
   idleCallback $= Just idle
-  reshapeCallback $= Just (reshape angle)
-  keyboardMouseCallback $= Just (keyboardMouse angle envRef initFunc)
+  reshapeCallback $= Just (reshape state)
+  keyboardMouseCallback $= Just (keyboardMouse state initFunc)
   mainLoop
 
-reshape angle s@(Size w h) = do
+reshape state s@(Size w h) = do
+  Just fbTexture <- get $ renderTexture state
+  Just fbTexture2 <- get $ lastRenderTexture state
+  print s
   viewport $= ((Position 0 0), s)
   matrixMode $= Projection
   loadIdentity
@@ -106,38 +166,131 @@ reshape angle s@(Size w h) = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
+  setTextureSize fbTexture (TextureSize2D w h)
+  setTextureSize fbTexture2 (TextureSize2D w h)
+
   matrixMode $= Modelview 0
 
-display angle envRef = do
+display state = do
+
+  Just fbTexture <- get $ renderTexture state
+  Just fbTexture2 <- get $ lastRenderTexture state
+  Just fbo <- get $ renderFramebuffer state
+  Just fbo2 <- get $ lastRenderFramebuffer state
+  Just env <- get $ environment state
+  Just prg <- get $ blurProgram state
+  blurF <- get $ blurFactor state
+
+  bindFramebuffer Framebuffer $= fbo
   clear [ColorBuffer, DepthBuffer]
 
-  angle' <- get angle
-  env <- get envRef
+  viewport' <- get viewport
+
+  -- textureBinding Texture2D $= Nothing
+  -- viewport $= ((Position 0 0), (Size 512 512))
+
+  textureBinding Texture2D $= Nothing
+  -- Just fbTexture2
+  
+  matrixMode $= Projection
+  glPushMatrix
+  loadIdentity
+  let fov = 60
+      near = 0.01
+      far = 100
+      aspect = 1
+  perspective fov aspect near far
+  translate $ Vector3 0 0 (-1::GLfloat)
+
+  --angle' <- get angle
   preservingMatrix $ do
-    rotate angle' $ Vector3 0 0 (1::GLfloat)
+    -- rotate angle' $ Vector3 0 0 (1::GLfloat)
     evalFrame env
+
+  textureBinding Texture2D $= Just fbTexture2
+  matrixMode $= Modelview 0
+  loadIdentity
+  translate (Vector3 0 0 (-1 :: GLfloat))
+
+  blend $= Enabled
+  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
+
+  currentProgram $= Just prg
+  let setUniform var val = do
+      location <- get (uniformLocation prg var)
+      reportErrors
+      uniform location $= val
+  setUniform "amt" (Index1 blurF)
+
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive Quads $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+
+  flush
+  blend $= Disabled
+  currentProgram $= Nothing
+  textureFunction $= Replace
+
+  bindFramebuffer Framebuffer $= fbo2
+  textureBinding Texture2D $= Just fbTexture
+  matrixMode $= Modelview 0
+  loadIdentity
+  translate (Vector3 0 0 (-0.5 :: GLfloat))
+
+  -- resolve overloading, not needed in "real" programs
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive Quads $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+  flush
+
+  bindFramebuffer Framebuffer $= defaultFramebufferObject
+  matrixMode $= Projection
+  glPopMatrix
+  viewport $= viewport'
+  textureBinding Texture2D $= Just fbTexture
+  clear [ ColorBuffer, DepthBuffer ]
+  matrixMode $= Modelview 0
+  loadIdentity
+  translate (Vector3 0 0 (-0.5 :: GLfloat))
+
+  -- resolve overloading, not needed in "real" programs
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive Quads $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
   swapBuffers
 
 idle = do
   postRedisplay Nothing
 
-keyboardAct a _ _ (SpecialKey KeyLeft) Down = do
-  a' <- get a
-  writeIORef a (a' + 5)
+--keyboardAct a _ _ (SpecialKey KeyLeft) Down = do
+--  a' <- get a
+--  writeIORef a (a' + 5)
 
-keyboardAct a _ _ (SpecialKey KeyRight) Down = do
-  a' <- get a
-  writeIORef a (a' - 5)
+--keyboardAct state _ _ (SpecialKey KeyRight) Down = do
+--  a' <- get a
+--  writeIORef a (a' - 5)
 
 -- |Reload scheme source by initialising a new environment and storing it in
 --  envRef.
-keyboardAct a envRef reinitFunc (SpecialKey KeyF5) Down = do
-  env <- get envRef
+keyboardAct state reinitFunc (SpecialKey KeyF5) Down = do
+  Just env <- get $ environment state
   evalLisp' env (Atom "*source*") >>= \x -> case x of
-    Right (String source) -> (reinitFunc source) >>= writeIORef envRef
+    Right (String source) -> (reinitFunc source) >>= (\e -> environment state $= Just e)
     _ -> return ()
 
-keyboardAct _ _ _ _ _ = return ()
+keyboardAct _ _ _ _ = return ()
 
-keyboardMouse angle envRef reinitFunc key state modifiers position = do
-  keyboardAct angle envRef reinitFunc key state
+keyboardMouse st reinitFunc key state modifiers position = do
+  keyboardAct st reinitFunc key state
