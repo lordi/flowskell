@@ -7,6 +7,7 @@ import Data.IORef
 import Language.Scheme.Types
 
 import Flowskell.TextureUtils (getAndCreateTexture)
+import Flowskell.State (State(..))
 
 loadTexture :: IORef [Maybe TextureObject] -> [LispVal] -> IO LispVal
 loadTexture txtLstRef [String s] = do 
@@ -23,9 +24,10 @@ setTexture txtLstRef [Number n] = do
                         return (Number 1)
 setTexture txtLstRef [] = setTexture txtLstRef [Number 0]
 
-initTextures :: Maybe TextureObject -> IO [(String, [LispVal] -> IO LispVal)]
-initTextures lastFrameTexture = do
-    txtLstRef <- newIORef [Nothing, lastFrameTexture]
+initTextures :: State -> IO [(String, [LispVal] -> IO LispVal)]
+initTextures state = do
+    lastFrameTextureObject <- get $ lastRenderTexture state
+    txtLstRef <- newIORef [Nothing, lastFrameTextureObject]
     return  [
         ("load-texture", loadTexture txtLstRef),
         ("texture", setTexture txtLstRef)
