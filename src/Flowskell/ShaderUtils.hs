@@ -46,6 +46,12 @@ linkShaders vs fs = do
       ioError (userError "linking failed")
    return brickProg
 
+readCompileAndLink :: String -> String -> IO (Program)
+readCompileAndLink vspath fspath = do
+  vs <- readAndCompileShader vspath
+  fs <- readAndCompileShader fspath
+  linkShaders [vs] [fs]
+
 installBrickShaders :: [VertexShader] -> [FragmentShader] -> IO ()
 installBrickShaders vs fs = do
    [brickProg] <- genObjectNames 1

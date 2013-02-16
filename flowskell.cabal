@@ -14,12 +14,12 @@ Flag JACK
   Default: False
 
 Flag Textures
-  Description: Enable OpenGL textures
+  Description: Enable OpenGL textures (experimental)
   Default: True
   Manual: True
 
 Flag Shaders
-  Description: Enable OpenGL shaders
+  Description: Enable render-to-texture, shaders, blur (experimental)
   Default: True
   Manual: True
 
@@ -42,4 +42,4 @@ Executable flowskell
     Cpp-Options: -DUSE_TEXTURES
 
   if flag(Shaders)
-    Cpp-Options: -DUSE_SHADERS
+    Cpp-Options: -DRENDER_TO_TEXTURE

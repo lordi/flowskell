@@ -27,23 +27,18 @@ import Control.Monad hiding (forM_)
 
 import Foreign ( withArray )
 
--- TODO 
--- Try to implement HasGetter/HasSetter for MVar instead IORef (Maybe ...)
+-- State data
+-- TODO: Try to implement HasGetter/HasSetter for MVar instead IORef (Maybe ...)
 data State = State {
     rotation :: IORef (Vector3 GLfloat),
     environment :: IORef (Maybe Env),
     blurFactor :: IORef GLfloat,
-#ifdef USE_TEXTURES
     renderTexture :: IORef (Maybe TextureObject),
     renderFramebuffer :: IORef (Maybe FramebufferObject),
     lastRenderTexture :: IORef (Maybe TextureObject),
     lastRenderFramebuffer :: IORef (Maybe FramebufferObject),
-#endif
-#ifdef USE_SHADERS
-    blurVShader :: IORef (Maybe VertexShader),
-    blurFShader :: IORef (Maybe FragmentShader),
+    depthBuffer :: IORef (Maybe RenderbufferObject),
     blurProgram :: IORef (Maybe Program)
-#endif
     }
 
 makeState :: IO State
@@ -55,9 +50,8 @@ makeState = do
     lastRenderTexture' <- newIORef Nothing
     renderFramebuffer' <- newIORef Nothing
     lastRenderFramebuffer' <- newIORef Nothing
-    blurVShader' <- newIORef Nothing
-    blurFShader' <- newIORef Nothing
     blurProgram' <- newIORef Nothing
+    depthBuffer' <- newIORef Nothing
     return $ State {
         environment = environment',
         rotation = rotation',
@@ -66,15 +60,13 @@ makeState = do
         lastRenderTexture = lastRenderTexture',
         renderFramebuffer = renderFramebuffer',
         lastRenderFramebuffer = lastRenderFramebuffer',
-        blurVShader = blurVShader',
-        blurFShader = blurFShader',
-        blurProgram = blurProgram'
+        blurProgram = blurProgram',
+        depthBuffer = depthBuffer'
         }
 
 
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
-
 
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow progname
@@ -102,42 +94,44 @@ viewer = let light0 = Light 0 in do
   jackIOPrimitives <- return []
 #endif
 
-#ifdef USE_TEXTURES
+#ifdef RENDER_TO_TEXTURE
+  -- Initialize "renderTexture"
   [fbo] <- genObjectNames 1
   (Just fbTexture) <- createBlankTexture (1, 1)
-
-  [fbo2] <- genObjectNames 1
-  (Just fbTexture2) <- createBlankTexture (1, 1)
-
   bindFramebuffer Framebuffer $= fbo
   framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture 0
 
+  -- Initialize "lastRenderTexture"
+  [fbo2] <- genObjectNames 1
+  (Just fbTexture2) <- createBlankTexture (1, 1)
   bindFramebuffer Framebuffer $= fbo2
   framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture2 0
 
+  -- Initialize "depthBuffer"
+  [drb] <- genObjectNames 1
+  bindRenderbuffer Renderbuffer $= drb
+  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize 1 1)
+  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb
+
+  -- Initialize blur shader
+  checkGLSLSupport
+  prg <- readCompileAndLink "shaders/fade.vert" "shaders/fade.frag"
+
+  -- Store all in state
   renderTexture state $= Just fbTexture
   renderFramebuffer state $= Just fbo
   lastRenderTexture state $= Just fbTexture2
   lastRenderFramebuffer state $= Just fbo2
-
-#endif
-
-#ifdef USE_SHADERS
-
-  checkGLSLSupport
-  vs <- readAndCompileShader "shaders/fade.vert"
-  fs <- readAndCompileShader "shaders/fade.frag"
-  prg <- linkShaders [vs] [fs]
-
-  blurVShader state $= Just vs
-  blurFShader state $= Just fs
+  depthBuffer state $= Just drb
   blurProgram state $= Just prg
-  --installBrickShaders [vs] [fs]
 
+  let lastFrameTextureObject = Just fbTexture2
+#else
+  let lastFrameTextureObject = Nothing
 #endif
 
 #ifdef USE_TEXTURES
-  texturesIOPrimitives <- initTextures fbTexture2
+  texturesIOPrimitives <- initTextures lastFrameTextureObject
 #else
   texturesIOPrimitives <- return []
 #endif
@@ -153,10 +147,7 @@ viewer = let light0 = Light 0 in do
   mainLoop
 
 reshape state s@(Size w h) = do
-  Just fbTexture <- get $ renderTexture state
-  Just fbTexture2 <- get $ lastRenderTexture state
-  print s
-  viewport $= ((Position 0 0), s)
+  viewport $= (Position 0 0, s)
   matrixMode $= Projection
   loadIdentity
   let fov = 60
@@ -166,32 +157,40 @@ reshape state s@(Size w h) = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
+#ifdef RENDER_TO_TEXTURE
+  -- We need to resize the framebuffer textures, because the window size
+  -- might have changed. Unfortunately, this may take a while.
+  -- TODO: find a faster way
+  Just fbTexture <- get $ renderTexture state
+  Just fbTexture2 <- get $ lastRenderTexture state
+  Just drb <- get $ depthBuffer state
+
+  putStrLn $ "Notice: Resizing all texture buffers to " ++ (show s)
   setTextureSize fbTexture (TextureSize2D w h)
   setTextureSize fbTexture2 (TextureSize2D w h)
+  bindRenderbuffer Renderbuffer $= drb
+  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
+#endif
 
   matrixMode $= Modelview 0
 
 display state = do
-
+  Just env <- get $ environment state
+#ifdef RENDER_TO_TEXTURE
   Just fbTexture <- get $ renderTexture state
   Just fbTexture2 <- get $ lastRenderTexture state
   Just fbo <- get $ renderFramebuffer state
   Just fbo2 <- get $ lastRenderFramebuffer state
-  Just env <- get $ environment state
   Just prg <- get $ blurProgram state
   blurF <- get $ blurFactor state
-
   bindFramebuffer Framebuffer $= fbo
+#endif
   clear [ColorBuffer, DepthBuffer]
 
-  viewport' <- get viewport
-
-  -- textureBinding Texture2D $= Nothing
-  -- viewport $= ((Position 0 0), (Size 512 512))
+  -- viewport' <- get viewport
 
   textureBinding Texture2D $= Nothing
-  -- Just fbTexture2
-  
+#ifdef RENDER_TO_TEXTURE
   matrixMode $= Projection
   glPushMatrix
   loadIdentity
@@ -200,6 +199,9 @@ display state = do
       far = 100
       aspect = 1
   perspective fov aspect near far
+#else
+  loadIdentity
+#endif
   translate $ Vector3 0 0 (-1::GLfloat)
 
   --angle' <- get angle
@@ -207,6 +209,7 @@ display state = do
     -- rotate angle' $ Vector3 0 0 (1::GLfloat)
     evalFrame env
 
+#ifdef RENDER_TO_TEXTURE
   textureBinding Texture2D $= Just fbTexture2
   matrixMode $= Modelview 0
   loadIdentity
@@ -236,6 +239,7 @@ display state = do
   textureFunction $= Replace
 
   bindFramebuffer Framebuffer $= fbo2
+  clear [ColorBuffer, DepthBuffer]
   textureBinding Texture2D $= Just fbTexture
   matrixMode $= Modelview 0
   loadIdentity
@@ -254,7 +258,7 @@ display state = do
   bindFramebuffer Framebuffer $= defaultFramebufferObject
   matrixMode $= Projection
   glPopMatrix
-  viewport $= viewport'
+  -- viewport $= viewport'
   textureBinding Texture2D $= Just fbTexture
   clear [ ColorBuffer, DepthBuffer ]
   matrixMode $= Modelview 0
@@ -269,6 +273,7 @@ display state = do
     texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
     texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
     texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+#endif
   swapBuffers
 
 idle = do

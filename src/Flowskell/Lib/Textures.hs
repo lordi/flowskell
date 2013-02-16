@@ -23,9 +23,9 @@ setTexture txtLstRef [Number n] = do
                         return (Number 1)
 setTexture txtLstRef [] = setTexture txtLstRef [Number 0]
 
-initTextures :: TextureObject -> IO [(String, [LispVal] -> IO LispVal)]
-initTextures lastFrameTO = do
-    txtLstRef <- newIORef [Nothing, Just lastFrameTO]
+initTextures :: Maybe TextureObject -> IO [(String, [LispVal] -> IO LispVal)]
+initTextures lastFrameTexture = do
+    txtLstRef <- newIORef [Nothing, lastFrameTexture]
     return  [
         ("load-texture", loadTexture txtLstRef),
         ("texture", setTexture txtLstRef)
