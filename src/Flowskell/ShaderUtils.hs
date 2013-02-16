@@ -1,4 +1,7 @@
+-- Utils for loading, compiling and linking GLSL shaders
+-- Largely taken from GLUT's Brick.hs example
 module Flowskell.ShaderUtils where
+
 import Prelude hiding ( sum )
 import Control.Applicative
 import Control.Monad
@@ -34,17 +37,17 @@ readAndCompileShader filePath = do
 
 linkShaders :: [VertexShader] -> [FragmentShader] -> IO (Program)
 linkShaders vs fs = do
-   [brickProg] <- genObjectNames 1
-   attachedShaders brickProg $= (vs, fs)
-   linkProgram brickProg
+   [prog] <- genObjectNames 1
+   attachedShaders prog $= (vs, fs)
+   linkProgram prog
    reportErrors
-   ok <- get (linkStatus brickProg)
-   infoLog <- get (programInfoLog brickProg)
+   ok <- get (linkStatus prog)
+   infoLog <- get (programInfoLog prog)
    mapM_ putStrLn ["Program info log:", infoLog, ""]
    unless ok $ do
-      deleteObjectNames [brickProg]
+      deleteObjectNames [prog]
       ioError (userError "linking failed")
-   return brickProg
+   return prog
 
 readCompileAndLink :: String -> String -> IO (Program)
 readCompileAndLink vspath fspath = do
@@ -52,28 +55,3 @@ readCompileAndLink vspath fspath = do
   fs <- readAndCompileShader fspath
   linkShaders [vs] [fs]
 
-installBrickShaders :: [VertexShader] -> [FragmentShader] -> IO ()
-installBrickShaders vs fs = do
-   [brickProg] <- genObjectNames 1
-   attachedShaders brickProg $= (vs, fs)
-   linkProgram brickProg
-   reportErrors
-   ok <- get (linkStatus brickProg)
-   infoLog <- get (programInfoLog brickProg)
-   mapM_ putStrLn ["Program info log:", infoLog, ""]
-   unless ok $ do
-      deleteObjectNames [brickProg]
-      ioError (userError "linking failed")
-
-   currentProgram $= Just brickProg
-
-   let setUniform var val = do
-       location <- get (uniformLocation brickProg var)
-       reportErrors
-       uniform location $= val
-
-   setUniform "BrickColor" (Color3 1.0 0.3 (0.2 :: GLfloat))
-   setUniform "MortarColor" (Color3 0.85 0.86 (0.84 :: GLfloat))
-   setUniform "BrickSize" (Vertex2 0.30 (0.15 :: GLfloat))
-   setUniform "BrickPct" (Vertex2 0.90 (0.85 :: GLfloat))
-   setUniform "LightPosition" (Vertex3 0 0 (4 :: GLfloat))
