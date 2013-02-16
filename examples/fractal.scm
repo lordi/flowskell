@@ -1,6 +1,4 @@
-(define *v* (load-texture "examples/img/mosaic.png"))
-
-
+(define *mosaic* (load-texture "examples/img/mosaic.png"))
 (define (every-frame)
     (rotate -15 x-axis)
     (rotate (modulo (/ (msecs) 120) 360) z-axis)
@@ -28,7 +26,7 @@
     (scale 0.2)
     (push)
         (rotate (/ (msecs) 10) x-axis)
-        (texture *v*)
+        (texture *mosaic*)
         (draw-cube)
     (pop)
 )
