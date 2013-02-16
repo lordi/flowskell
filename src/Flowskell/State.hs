@@ -39,7 +39,7 @@ makeState :: IO State
 makeState = do
     environment' <- newIORef Nothing
     rotation' <- newIORef (Vector3 0 0 (0 :: GLfloat))
-    blurFactor' <- newIORef 0.5
+    blurFactor' <- newIORef 0
     renderTexture' <- newIORef Nothing
     lastRenderTexture' <- newIORef Nothing
     renderFramebuffer' <- newIORef Nothing

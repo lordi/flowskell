@@ -21,6 +21,9 @@ import Flowskell.Lib.Jack (initJack)
 #ifdef USE_TEXTURES
 import Flowskell.Lib.Textures (initTextures)
 #endif
+#ifdef RENDER_TO_TEXTURE
+import Flowskell.Lib.Shaders (initShaders)
+#endif
 
 import Graphics.Rendering.OpenGL.GL.Texturing.Environments
 
@@ -50,12 +53,6 @@ viewer = let light0 = Light 0 in do
   --cullFace $= Just Front
 
   state <- makeState
-
-#ifdef USE_JACK
-  jackIOPrimitives <- initJack
-#else
-  jackIOPrimitives <- return []
-#endif
 
 #ifdef RENDER_TO_TEXTURE
   -- Initialize "renderTexture"
@@ -87,6 +84,10 @@ viewer = let light0 = Light 0 in do
   lastRenderFramebuffer state $= Just fbo2
   depthBuffer state $= Just drb
   blurProgram state $= Just prg
+
+  shaderIOPrimitives <- initShaders state
+#else
+  shaderIOPrimitives <- return []
 #endif
 
 #ifdef USE_TEXTURES
@@ -95,7 +96,13 @@ viewer = let light0 = Light 0 in do
   texturesIOPrimitives <- return []
 #endif
 
-  let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives
+#ifdef USE_JACK
+  jackIOPrimitives <- initJack
+#else
+  jackIOPrimitives <- return []
+#endif
+
+  let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
       initFunc = (initSchemeEnv extraPrimitives)
   env <- initFunc filename
   environment state $= Just env
