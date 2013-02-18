@@ -23,6 +23,10 @@ Flag Shaders
   Default: True
   Manual: True
 
+Flag Debug
+  Description: Enable debugging, make rendering pipeline more obvious
+  Default: False
+
 Executable flowskell
   Main-is: Main.hs
   Hs-Source-Dirs: src
@@ -43,3 +47,6 @@ Executable flowskell
 
   if flag(Shaders)
     Cpp-Options: -DRENDER_TO_TEXTURE
+
+  if flag(Debug)
+    Cpp-Options: -DDEBUG

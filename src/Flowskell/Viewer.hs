@@ -37,21 +37,6 @@ viewer = let light0 = Light 0 in do
   initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
   createWindow progname
 
-  ambient light0 $= Color4 0.2 0.2 0.2 1
-  diffuse light0 $= Color4 1 1 1 0.6
-  position light0 $= Vertex4 0 0 3 0
-  lightModelAmbient $= Color4 0.2 0.2 0.2 1
-  lightModelLocalViewer $= Disabled
-  materialShininess Front $= 0.0
-  shadeModel $= Smooth
-  frontFace $= CW
-  lighting $= Enabled
-  light light0 $= Enabled
-  autoNormal $= Enabled
-  normalize $= Enabled
-  depthFunc $= Just Less
-  --cullFace $= Just Front
-
   state <- makeState
 
 #ifdef RENDER_TO_TEXTURE
@@ -61,17 +46,23 @@ viewer = let light0 = Light 0 in do
   bindFramebuffer Framebuffer $= fbo
   framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture 0
 
+  -- Initialize Depth Buffer" for renderTexture
+  [drb] <- genObjectNames 1
+  bindRenderbuffer Renderbuffer $= drb
+  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize 1 1)
+  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb
+
   -- Initialize "lastRenderTexture"
   [fbo2] <- genObjectNames 1
   (Just fbTexture2) <- createBlankTexture (1, 1)
   bindFramebuffer Framebuffer $= fbo2
   framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture2 0
 
-  -- Initialize "depthBuffer"
-  [drb] <- genObjectNames 1
-  bindRenderbuffer Renderbuffer $= drb
+  -- Initialize Depth Buffer for lastRenderTexture
+  [drb2] <- genObjectNames 1
+  bindRenderbuffer Renderbuffer $= drb2
   renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize 1 1)
-  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb
+  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb2
 
   -- Initialize blur shader
   checkGLSLSupport
@@ -80,11 +71,13 @@ viewer = let light0 = Light 0 in do
   -- Store all in state
   renderTexture state $= Just fbTexture
   renderFramebuffer state $= Just fbo
+  depthBuffer state $= Just drb
   lastRenderTexture state $= Just fbTexture2
   lastRenderFramebuffer state $= Just fbo2
-  depthBuffer state $= Just drb
+  lastRenderDepthBuffer state $= Just drb2
   blurProgram state $= Just prg
 
+  bindFramebuffer Framebuffer $= fbo
   shaderIOPrimitives <- initShaders state
 #else
   shaderIOPrimitives <- return []
@@ -100,6 +93,27 @@ viewer = let light0 = Light 0 in do
   jackIOPrimitives <- initJack
 #else
   jackIOPrimitives <- return []
+#endif
+
+  ambient light0 $= Color4 0.2 0.2 0.2 1
+  diffuse light0 $= Color4 1 1 1 0.6
+  position light0 $= Vertex4 0 0 3 0
+  lightModelAmbient $= Color4 0.2 0.2 0.2 1
+  lightModelLocalViewer $= Disabled
+  materialShininess Front $= 0.0
+  shadeModel $= Smooth
+  frontFace $= CW
+  lighting $= Enabled
+  light light0 $= Enabled
+  autoNormal $= Enabled
+  normalize $= Enabled
+  depthFunc $= Just Less
+  -- cullFace $= Just Back
+
+#ifdef DEBUG
+  clearColor $= Color4 0.5 0.5 0.5 0.5
+#else
+  clearColor $= Color4 0 0 0 0
 #endif
 
   let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
@@ -130,15 +144,35 @@ reshape state s@(Size w h) = do
   Just fbTexture <- get $ renderTexture state
   Just fbTexture2 <- get $ lastRenderTexture state
   Just drb <- get $ depthBuffer state
+  Just drb2 <- get $ lastRenderDepthBuffer state
 
   putStrLn $ "Notice: Resizing all texture buffers to " ++ (show s)
   setTextureSize fbTexture (TextureSize2D w h)
   setTextureSize fbTexture2 (TextureSize2D w h)
   bindRenderbuffer Renderbuffer $= drb
   renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
+  bindRenderbuffer Renderbuffer $= drb2
+  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
 #endif
 
-  matrixMode $= Modelview 0
+unitQuad = do
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive Quads $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1) (-1)   0 )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1)   1    0 )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1    1    0 )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1  (-1)   0 )
+
+unitFrame = do
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive LineStrip $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0  )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0  )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0  )
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
 
 display state = do
   Just env <- get $ environment state
@@ -148,38 +182,30 @@ display state = do
   Just fbo <- get $ renderFramebuffer state
   Just fbo2 <- get $ lastRenderFramebuffer state
   Just prg <- get $ blurProgram state
+  Just drb <- get $ depthBuffer state
   blurF <- get $ blurFactor state
   bindFramebuffer Framebuffer $= fbo
+  depthFunc $= Just Less
 #endif
   clear [ColorBuffer, DepthBuffer]
 
-  -- viewport' <- get viewport
-
   textureBinding Texture2D $= Nothing
-#ifdef RENDER_TO_TEXTURE
-  matrixMode $= Projection
-  glPushMatrix
+
+  matrixMode $= Modelview 0
   loadIdentity
-  let fov = 60
-      near = 0.01
-      far = 100
-      aspect = 1
-  perspective fov aspect near far
-#else
-  loadIdentity
-#endif
   translate $ Vector3 0 0 (-1::GLfloat)
 
-  --angle' <- get angle
   preservingMatrix $ do
-    -- rotate angle' $ Vector3 0 0 (1::GLfloat)
     evalFrame env
 
 #ifdef RENDER_TO_TEXTURE
-  textureBinding Texture2D $= Just fbTexture2
-  matrixMode $= Modelview 0
+  --
+  -- Blend the last frame over the current scene, with fade factor
+  --
+  depthFunc $= Just Always
+  matrixMode $= Projection
+  glPushMatrix -- Save original matrix
   loadIdentity
-  translate (Vector3 0 0 (-1 :: GLfloat))
 
   blend $= Enabled
   blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
@@ -191,56 +217,61 @@ display state = do
       uniform location $= val
   setUniform "amt" (Index1 blurF)
 
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive Quads $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+  textureBinding Texture2D $= Just fbTexture2
+  unitQuad
 
-  flush
   blend $= Disabled
   currentProgram $= Nothing
   textureFunction $= Replace
+  flush
 
+  --
+  -- Now, render the just finished scene also to "last frame buffer"
+  --
   bindFramebuffer Framebuffer $= fbo2
   clear [ColorBuffer, DepthBuffer]
   textureBinding Texture2D $= Just fbTexture
-  matrixMode $= Modelview 0
-  loadIdentity
-  translate (Vector3 0 0 (-0.5 :: GLfloat))
-
-  -- resolve overloading, not needed in "real" programs
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive Quads $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
+  unitQuad
   flush
 
+#ifdef DEBUG
+  -- Debug frame
+  textureBinding Texture2D $= Nothing
+  color (Color3 1.0 1.0 1.0 :: Color3 GLfloat)
+  lineStipple $= Nothing
+  lighting $= Disabled
+  unitFrame
+#endif
+
   bindFramebuffer Framebuffer $= defaultFramebufferObject
+  textureBinding Texture2D $= Just fbTexture
+  matrixMode $= Projection
+  loadIdentity
+  let fov = 92
+      near = 0.001
+      far = 1000
+      aspect = 1
+  perspective fov aspect near far
+
+  clear [ ColorBuffer, DepthBuffer ]
+  depthFunc $= Just Always
+  unitQuad
+
+#ifdef DEBUG
+  -- Debug frame
+  textureBinding Texture2D $= Nothing
+  color $ (Color4 1 1 1 (1 ::GLfloat))
+  lineStipple $= Just (1, 0x1C47)
+  lighting $= Disabled
+  unitFrame
+  lighting $= Enabled
+#endif
+
   matrixMode $= Projection
   glPopMatrix
-  -- viewport $= viewport'
-  textureBinding Texture2D $= Just fbTexture
-  clear [ ColorBuffer, DepthBuffer ]
-  matrixMode $= Modelview 0
-  loadIdentity
-  translate (Vector3 0 0 (-0.5 :: GLfloat))
-
-  -- resolve overloading, not needed in "real" programs
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive Quads $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0.0     )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0.0     )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0.0     )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0.0     )
 #endif
   swapBuffers
+
 
 idle = do
   postRedisplay Nothing
