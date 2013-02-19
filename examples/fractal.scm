@@ -3,7 +3,7 @@
 (define (every-frame)
     (rotate -15 x-axis)
     (rotate (modulo (/ (msecs) 120) 360) z-axis)
-    (scale (+ 0.4 (/ (sin (secs)) 10)))
+    (scale (+ 0.8 (/ (sin (secs)) 10)))
     (texture 1) ;; Set the last rendered frame as active texture
     (push)
         (translate x-axis)
