@@ -1,6 +1,4 @@
-module Flowskell.TextureUtils where 
-import Data.Vector.Storable (unsafeWith)
- 
+module Flowskell.TextureUtils where
 import Graphics.Rendering.OpenGL.GL.Texturing.Specification (texImage2D, Level, Border, TextureSize2D(..))
 import Graphics.Rendering.OpenGL.GL.PixelRectangles.ColorTable (Proxy(..), PixelInternalFormat(..))
 import Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization (PixelData(..))
@@ -13,7 +11,7 @@ import Data.Word (Word8)
 import Foreign ( withArray )
 import Foreign.ForeignPtr
 import Foreign.Storable (sizeOf)
-import Data.Vector.Storable (unsafeFromForeignPtr)
+import Data.Vector.Storable (unsafeFromForeignPtr, unsafeWith)
 
 loadImage :: String -> IO ()
 loadImage path = do 
@@ -21,7 +19,7 @@ loadImage path = do
     case image of
      (Left s) -> do print s
                     exitWith (ExitFailure 1)
-     (Right d) -> do image2Texture d
+     (Right d) -> image2Texture d
 
 image2Texture (ImageRGB8 (Image width height dat)) =
     let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in
@@ -61,13 +59,13 @@ writeTextureToFile texture filename = do
     withForeignPtr fp $ \ p ->
         getTexImage (Left Texture2D) 0 (PixelData RGB UnsignedByte p)
     let v = (unsafeFromForeignPtr fp 0 bufsize)
-    writePng filename ((Image w h v) :: Image PixelRGB8)
+    writePng filename (Image w h v :: Image PixelRGB8)
 
 createBlankTexture :: (Int, Int) -> IO (Maybe TextureObject)
 createBlankTexture (width, height) =
     let size = (TextureSize2D (fromIntegral width) (fromIntegral height)) in do
-    [texName] <- genObjectNames 1  -- generate our texture.
-    textureBinding Texture2D $= Just texName  -- make our new texture the current texture.
+    [texName] <- genObjectNames 1
+    textureBinding Texture2D $= Just texName
     textureFunction $= Decal
     textureWrapMode Texture2D S $= (Repeated, Repeat)
     textureWrapMode Texture2D T $= (Repeated, Repeat)
@@ -77,17 +75,17 @@ createBlankTexture (width, height) =
     return (Just texName)
 
 setTextureSize texName size = do
-    textureBinding Texture2D $= Just texName  -- make our new texture the current texture.
-    --makeImage size (\i _ -> Color3 0 0 0) $
-    --  texImage2D Nothing NoProxy 0 RGB8 size 0
-
+    -- TODO: This probably can be optimized
+    textureBinding Texture2D $= Just texName
     makeImageA size (\i _ -> Color4 0 0 0 0) $
       texImage2D Nothing NoProxy 0 RGBA8 size 0
 
 getAndCreateTexture :: String -> IO (Maybe TextureObject)
 getAndCreateTexture fileName = do
-    [texName] <- genObjectNames 1  -- generate our texture.
-    textureBinding Texture2D $= Just texName  -- make our new texture the current texture.
+    -- generate our texture name:
+    [texName] <- genObjectNames 1
+    -- make our new texture the current texture:
+    textureBinding Texture2D $= Just texName  
     textureFunction $= Decal
     textureWrapMode Texture2D S $= (Repeated, Repeat)
     textureWrapMode Texture2D T $= (Repeated, Repeat)

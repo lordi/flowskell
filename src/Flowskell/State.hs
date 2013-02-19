@@ -28,7 +28,7 @@ data State = State {
     lastRenderFramebuffer :: IORef (Maybe FramebufferObject),
     depthBuffer :: IORef (Maybe RenderbufferObject),
     lastRenderDepthBuffer :: IORef (Maybe RenderbufferObject),
-    lastPosition :: IORef (Position),
+    lastPosition :: IORef Position,
     blurProgram :: IORef (Maybe Program)
     }
 
