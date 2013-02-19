@@ -7,13 +7,13 @@ import Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization (PixelData(..)
 
 import System.Exit -- TODO remove
 import Codec.Picture.Types
-import Codec.Picture (readPng)
-import Graphics.Rendering.OpenGL.GL.VertexArrays
-import Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization
+import Codec.Picture (readPng, writePng)
 import Graphics.UI.GLUT
-import Data.Word
-import Foreign.Marshal.Alloc
+import Data.Word (Word8)
 import Foreign ( withArray )
+import Foreign.ForeignPtr
+import Foreign.Storable (sizeOf)
+import Data.Vector.Storable (unsafeFromForeignPtr)
 
 loadImage :: String -> IO ()
 loadImage path = do 
@@ -48,6 +48,20 @@ makeImageA (TextureSize2D w h) f act =
                i <- [ 0 .. w - 1 ],
                j <- [ 0 .. h - 1 ] ] $
    act . PixelData RGBA UnsignedByte
+
+-- |Store a 2D texture as a PNG image on the disk
+writeTextureToFile :: TextureObject -> String -> IO ()
+writeTextureToFile texture filename = do
+    textureBinding Texture2D $= Just texture
+    s@(TextureSize2D w' h') <- get $ textureSize2D (Left Texture2D) 0
+    let w = fromIntegral w'
+        h = fromIntegral h'
+        bufsize = w * h * 3 * sizeOf (undefined :: Word8)
+    fp <- mallocForeignPtrBytes bufsize
+    withForeignPtr fp $ \ p ->
+        getTexImage (Left Texture2D) 0 (PixelData RGB UnsignedByte p)
+    let v = (unsafeFromForeignPtr fp 0 bufsize)
+    writePng filename ((Image w h v) :: Image PixelRGB8)
 
 createBlankTexture :: (Int, Int) -> IO (Maybe TextureObject)
 createBlankTexture (width, height) =
