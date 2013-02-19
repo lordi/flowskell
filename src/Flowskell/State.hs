@@ -28,6 +28,7 @@ data State = State {
     lastRenderFramebuffer :: IORef (Maybe FramebufferObject),
     depthBuffer :: IORef (Maybe RenderbufferObject),
     lastRenderDepthBuffer :: IORef (Maybe RenderbufferObject),
+    lastPosition :: IORef (Position),
     blurProgram :: IORef (Maybe Program)
     }
 
@@ -43,6 +44,7 @@ makeState = do
     lastRenderDepthBuffer' <- newIORef Nothing
     blurProgram' <- newIORef Nothing
     depthBuffer' <- newIORef Nothing
+    lastPosition' <- newIORef (Position (-1) (-1 :: GLint))
     return State {
         environment = environment',
         rotation = rotation',
@@ -51,6 +53,7 @@ makeState = do
         lastRenderTexture = lastRenderTexture',
         renderFramebuffer = renderFramebuffer',
         lastRenderFramebuffer = lastRenderFramebuffer',
+        lastPosition = lastPosition',
         blurProgram = blurProgram',
         lastRenderDepthBuffer = lastRenderDepthBuffer',
         depthBuffer = depthBuffer'

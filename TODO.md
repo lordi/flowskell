@@ -19,7 +19,7 @@ Scheme:
 
 Viewer:
 
- * Be able to rotate top level with mouse and cursor keys
+ * ~~be able to rotate top level with mouse~~ and cursor keys
  * optional code, fps display
  * live code reloading
  * Have an option to render the n-th frame to a PNG file and quit, instead of screen output

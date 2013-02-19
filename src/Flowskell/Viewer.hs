@@ -123,6 +123,8 @@ viewer = let light0 = Light 0 in do
   displayCallback $= display state
   idleCallback $= Just idle
   reshapeCallback $= Just (reshape state)
+  motionCallback $= Just (motion state)
+  mouseCallback $= Just (mouse state)
   keyboardMouseCallback $= Just (keyboardMouse state initFunc)
   mainLoop
 
@@ -295,4 +297,20 @@ keyboardAct state reinitFunc (SpecialKey KeyF5) Down = do
 keyboardAct _ _ _ _ = return ()
 
 keyboardMouse st reinitFunc key state modifiers position = do
+  lastPosition st $= (Position (-1) (-1))
   keyboardAct st reinitFunc key state
+
+mouse state keystate mod pos@(Position x y) = do
+  lastPosition state $= (Position (-1) (-1))
+
+motion :: State -> MotionCallback
+motion state pos@(Position x y) = do
+  postRedisplay Nothing
+  Position xt yt <- get (lastPosition state)
+  lastPosition state $= pos
+  when (xt /= -1 || yt /= -1) $ do
+     let Vector3 xl yl _ = Vector3 (fromIntegral (x - xt)) (fromIntegral (y - yt)) 0
+     matrixMode $= Projection
+     rotate (yl / 10.0) (Vector3 (-1) 0 (0 :: GLfloat))
+     rotate (xl / 10.0) (Vector3 0 (-1) (0 :: GLfloat))
+
