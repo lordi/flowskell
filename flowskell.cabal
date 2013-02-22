@@ -33,7 +33,7 @@ Executable flowskell
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL
-  Build-Depends: husk-scheme >= 3.6.3
+  Build-Depends: husk-scheme >= 3.7
   Ghc-Options: -O2 -threaded
 
   if flag(JACK)

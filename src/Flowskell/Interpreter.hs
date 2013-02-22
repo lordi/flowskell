@@ -4,6 +4,7 @@ import Control.Monad.Error
 
 import Language.Scheme.Core
 import Language.Scheme.Types
+import Language.Scheme.Util
 import Language.Scheme.Parser
 import Language.Scheme.Variables
 import Language.Scheme.Compiler
