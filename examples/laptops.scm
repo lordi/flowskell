@@ -1,4 +1,3 @@
-(define *haskell* (load-texture "examples/img/haskell-logo.png"))
 (blur 0.3)
 
 (define (draw-laptop)
@@ -23,7 +22,7 @@
         (pop)
         (scale 0.9)
         (translate (vector 0 0 0.201))
-        (texture (if (< (rndf) 0.1) *haskell* 1))
+        (texture 1)
         (draw-plane)
     (pop))
 

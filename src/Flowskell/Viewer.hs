@@ -34,7 +34,7 @@ import Flowskell.State
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
 
-  initialDisplayMode $= [DoubleBuffered, RGBMode, WithDepthBuffer]
+  initialDisplayMode $= [DoubleBuffered, RGBAMode, WithDepthBuffer]
   createWindow progname
 
   state <- makeState
@@ -110,10 +110,13 @@ viewer = let light0 = Light 0 in do
   depthFunc $= Just Less
   -- cullFace $= Just Back
 
+  blend $= Enabled
+  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
+
 #ifdef DEBUG
   clearColor $= Color4 0.5 0.5 0.5 0.5
 #else
-  clearColor $= Color4 0 0 0 0
+  clearColor $= Color4 0 0 0 1
 #endif
 
   let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
@@ -188,6 +191,7 @@ display state = do
   blurF <- get $ blurFactor state
   bindFramebuffer Framebuffer $= fbo
   depthFunc $= Just Less
+
 #endif
   clear [ColorBuffer, DepthBuffer]
 
@@ -209,9 +213,6 @@ display state = do
   glPushMatrix -- Save original matrix
   loadIdentity
 
-  blend $= Enabled
-  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
-
   currentProgram $= Just prg
   let setUniform var val = do
       location <- get (uniformLocation prg var)
@@ -222,7 +223,6 @@ display state = do
   textureBinding Texture2D $= Just fbTexture2
   unitQuad
 
-  blend $= Disabled
   currentProgram $= Nothing
   textureFunction $= Replace
   flush
@@ -273,6 +273,8 @@ display state = do
   glPopMatrix
 #endif
   swapBuffers
+
+--  writeTextureToFile fbTexture "test.png"
 
 
 idle = do

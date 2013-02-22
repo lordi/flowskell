@@ -77,7 +77,7 @@ v x = Vertex3 v0 v1 v2
 
 setColor r g b = do
     let c = (Color4 r g b 1 :: Color4 GLfloat)
-    color (Color3 r g b :: Color3 GLfloat)
+    color c
     materialDiffuse Front $= c
     materialAmbient Front $= c
     materialSpecular Front $= c
