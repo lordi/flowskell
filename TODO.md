@@ -21,7 +21,7 @@ Viewer:
 
  * ~~be able to rotate top level with mouse~~ and cursor keys
  * optional code, fps display
- * live code reloading, and fix F5 code reloading first
+ * ~~live code reloading, and fix F5 code reloading first~~
  * Have an option to render the n-th frame to a PNG file and quit, instead of screen output
 
 Audio input:

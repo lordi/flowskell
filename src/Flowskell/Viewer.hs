@@ -12,8 +12,7 @@ import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Core (evalLisp')
 import Language.Scheme.Types (Env, LispVal (Atom, String))
 import Control.Concurrent
-import Control.Monad hiding (forM_)
-import Foreign ( withArray )
+import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -26,6 +25,7 @@ import Flowskell.Lib.Shaders (initShaders)
 #endif
 
 import Graphics.Rendering.OpenGL.GL.Texturing.Environments
+import System.Directory (getModificationTime)
 
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
@@ -124,7 +124,7 @@ viewer = let light0 = Light 0 in do
   env <- initFunc filename
   environment state $= Just env
   displayCallback $= display state
-  idleCallback $= Just idle
+  idleCallback $= Just (idle state initFunc)
   reshapeCallback $= Just (reshape state)
   motionCallback $= Just (motion state)
   mouseCallback $= Just (mouse state)
@@ -276,17 +276,22 @@ display state = do
 
 --  writeTextureToFile fbTexture "test.png"
 
-
-idle = do
+idle state reinitFunc = do
+  now <- getCurrentTime
+  lastCheckTime <- get $ lastReloadCheck state
+  when (diffUTCTime now lastCheckTime > 1) $ do
+    Just env <- get $ environment state
+    evalLisp' env (Atom "*source*") >>= \x -> case x of
+        Right (String source) -> do
+            modTime <- getModificationTime source
+            lastModTime <- get $ lastSourceModification state
+            when (lastModTime < modTime) $ do
+                putStrLn $ "Reloading " ++ source
+                (reinitFunc source) >>= (\e -> environment state $= Just e)
+            lastSourceModification state $= modTime
+        _ -> return ()
+    lastReloadCheck state $= now
   postRedisplay Nothing
-
---keyboardAct a _ _ (SpecialKey KeyLeft) Down = do
---  a' <- get a
---  writeIORef a (a' + 5)
-
---keyboardAct state _ _ (SpecialKey KeyRight) Down = do
---  a' <- get a
---  writeIORef a (a' - 5)
 
 -- |Reload scheme source by initialising a new environment and storing it in
 --  envRef.

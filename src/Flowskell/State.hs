@@ -9,12 +9,11 @@ import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Types (Env)
 
-import Graphics.Rendering.OpenGL.GL.Texturing.Environments
+import Data.Time.Clock (getCurrentTime)
+import qualified Data.Time.Clock as C
 
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
-import Control.Concurrent
-import Control.Monad hiding (forM_)
 
 -- State data
 -- TODO: Try to implement HasGetter/HasSetter for MVar instead IORef (Maybe ...)
@@ -29,7 +28,9 @@ data State = State {
     depthBuffer :: IORef (Maybe RenderbufferObject),
     lastRenderDepthBuffer :: IORef (Maybe RenderbufferObject),
     lastPosition :: IORef Position,
-    blurProgram :: IORef (Maybe Program)
+    blurProgram :: IORef (Maybe Program),
+    lastReloadCheck :: IORef C.UTCTime,
+    lastSourceModification :: IORef C.UTCTime
     }
 
 makeState :: IO State
@@ -45,6 +46,8 @@ makeState = do
     blurProgram' <- newIORef Nothing
     depthBuffer' <- newIORef Nothing
     lastPosition' <- newIORef (Position (-1) (-1 :: GLint))
+    lastReloadCheck' <- getCurrentTime >>= newIORef
+    lastSourceModification' <- getCurrentTime >>= newIORef
     return State {
         environment = environment',
         rotation = rotation',
@@ -56,5 +59,7 @@ makeState = do
         lastPosition = lastPosition',
         blurProgram = blurProgram',
         lastRenderDepthBuffer = lastRenderDepthBuffer',
-        depthBuffer = depthBuffer'
+        depthBuffer = depthBuffer',
+        lastReloadCheck = lastReloadCheck',
+        lastSourceModification = lastSourceModification'
         }
