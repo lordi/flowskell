@@ -2,12 +2,11 @@ module Flowskell.Interpreter where
 import Control.Monad
 import Control.Monad.Error
 
-import Language.Scheme.Core
+import Language.Scheme.Core (r5rsEnv, evalString, evalLisp', primitiveBindings)
 import Language.Scheme.Types
 import Language.Scheme.Util
 import Language.Scheme.Parser
-import Language.Scheme.Variables
-import Language.Scheme.Compiler
+import Language.Scheme.Variables (extendEnv)
 
 import Flowskell.Lib.GL (glIOPrimitives)
 import Flowskell.Lib.Random (randomIOPrimitives)
@@ -23,16 +22,13 @@ mkPrimitiveList b = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) b
                 where makeThrowErrorFunc f obj = liftIO $ f obj
 
 initSchemeEnv extraPrimitives filename = do
-  stdlib <- getDataFileName "lib/stdlib.scm"
-  stdlib2 <- getDataFileName "lib/flowskell.scm"
-  let primitives = mkPrimitiveList $ defaultPrimitives ++ extraPrimitives
-  env <- primitiveBindings >>= flip extendEnv primitives
-  let files = [stdlib, stdlib2, filename]
+  let fskPrimitives = mkPrimitiveList $ defaultPrimitives ++ extraPrimitives
+  fskLib <- getDataFileName "lib/flowskell.scm"
+  env <- r5rsEnv >>= flip extendEnv fskPrimitives
   evalString env $ "(define *source* \"" ++ (escapeBackslashes filename) ++ "\")"
   mapM (\file -> do
     result <- evalString env $ "(load \"" ++ (escapeBackslashes file) ++ "\")"
-    putStrLn $ file ++ ": " ++ result) files
-
+    putStrLn $ file ++ ": " ++ result) [fskLib, filename]
   return env
 
 evalFrame env = do
