@@ -4,7 +4,7 @@ import Control.Monad.Error
 
 import Language.Scheme.Core (r5rsEnv, evalString, evalLisp', primitiveBindings)
 import Language.Scheme.Types
-import Language.Scheme.Util
+import Language.Scheme.Util (escapeBackslashes)
 import Language.Scheme.Parser
 import Language.Scheme.Variables (extendEnv)
 
@@ -25,16 +25,16 @@ initSchemeEnv extraPrimitives filename = do
   let fskPrimitives = mkPrimitiveList $ defaultPrimitives ++ extraPrimitives
   fskLib <- getDataFileName "lib/flowskell.scm"
   env <- r5rsEnv >>= flip extendEnv fskPrimitives
-  evalString env $ "(define *source* \"" ++ (escapeBackslashes filename) ++ "\")"
-  mapM (\file -> do
-    result <- evalString env $ "(load \"" ++ (escapeBackslashes file) ++ "\")"
+  mapM_ (\file -> do
+    result <- evalString env $ "(load \"" ++ escapeBackslashes file ++ "\")"
     putStrLn $ file ++ ": " ++ result) [fskLib, filename]
+  result <- evalString env $ "(define *source* \"" ++ escapeBackslashes filename ++ "\")"
   return env
 
 evalFrame env = do
   evalLisp' env (List [Atom "every-frame-entry-point"]) >>= \x -> case x of
     Left error -> do
-        putStrLn $ show error
-        evalString env $ "(define *has-error* #t)"
+        print $ error
+        evalString env "(define *has-error* #t)"
         return ()
     _ -> return ()
