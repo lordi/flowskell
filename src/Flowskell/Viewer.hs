@@ -276,6 +276,8 @@ display state = do
 
 --  writeTextureToFile fbTexture "test.png"
 
+-- |Idle function. Check modifcation date of the current source file
+--  and reload the environment when it has changed.
 idle state reinitFunc = do
   now <- getCurrentTime
   lastCheckTime <- get $ lastReloadCheck state
@@ -300,6 +302,22 @@ keyboardAct state reinitFunc (SpecialKey KeyF5) Down = do
   evalLisp' env (Atom "*source*") >>= \x -> case x of
     Right (String source) -> (reinitFunc source) >>= (\e -> environment state $= Just e)
     _ -> return ()
+
+-- |Reset top level rotation
+keyboardAct state reinitFunc (SpecialKey KeyF6) Down = do
+  matrixMode $= Projection
+
+  -- This is redundant and also incorrect.
+  -- TODO:
+  -- either save aspect or (width, height) or
+  -- original transform matrix in state
+  loadIdentity
+  let fov = 60
+      near = 0.01
+      far = 100
+      aspect = 1
+  perspective fov aspect near far
+  translate $ Vector3 0 0 (-1::GLfloat)
 
 keyboardAct _ _ _ _ = return ()
 

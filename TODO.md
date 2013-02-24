@@ -24,6 +24,12 @@ Viewer:
  * ~~live code reloading, and fix F5 code reloading first~~
  * Have an option to render the n-th frame to a PNG file and quit, instead of screen output
 
+ Keys:
+   * F3: screenshot
+   * ~~F5: code reload~~
+   * F6: reset view matrix
+   * F11: fullscreen
+
 Audio input:
  * ~~implement Jack capture~~
  * make Jack audio input stable
