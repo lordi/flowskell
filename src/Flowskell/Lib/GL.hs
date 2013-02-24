@@ -20,9 +20,8 @@ doPush [] = glPushMatrix >> return (Bool True)
 doPop [] = glPopMatrix >> return (Bool True)
 
 doColor :: [LispVal] -> IO LispVal
-doColor [Vector v] =
-    let [r, g, b] = map extractGLfloat (elems v) in do
-    setColor r g b
+doColor [Vector v] = do
+    setColor $ map extractGLfloat (elems v)
     return (Bool True)
 
 doTranslate :: [LispVal] -> IO LispVal
@@ -75,8 +74,9 @@ v x = Vertex3 v0 v1 v2
               | x == 0 || x == 3 || x == 4 || x == 7 = 1
               | x == 1 || x == 2 || x == 5 || x == 6 = -1
 
-setColor r g b = do
-    let c = (Color4 r g b 1 :: Color4 GLfloat)
+setColor [r, g, b] = setColor [r, g, b, 1]
+setColor [r, g, b, a] = do
+    let c = (Color4 r g b a :: Color4 GLfloat)
     color c
     materialDiffuse Front $= c
     materialAmbient Front $= c
@@ -84,7 +84,7 @@ setColor r g b = do
 
 drawGrid :: [LispVal] -> IO LispVal
 drawGrid [] = do
-    setColor 1 1 1
+    setColor [1, 1, 1]
     lineWidth $= 0.5
     mapM (\c -> do
         renderPrimitive Lines $ do
@@ -103,10 +103,10 @@ drawGrid [] = do
         vertex $ (Vertex3 (-1)   1   0 :: Vertex3 GLfloat)
         vertex $ (Vertex3   1    1   0 :: Vertex3 GLfloat)
         vertex $ (Vertex3   1  (-1)  0 :: Vertex3 GLfloat)
-    setColor 1 0 0
+    setColor [1, 0, 0]
     lineWidth $= 4.0
-    mapM (\(x,y,z) -> do
-        setColor x y z
+    mapM_ (\(x,y,z) -> do
+        setColor [x, y, z]
         renderPrimitive Lines $ do
             vertex $ (Vertex3 0 0 0 :: Vertex3 GLfloat)
             vertex $ (Vertex3 x y z :: Vertex3 GLfloat)
