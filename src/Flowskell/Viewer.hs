@@ -1,6 +1,6 @@
 module Flowskell.Viewer where
 import Control.Monad (when)
-import Data.Maybe (listToMaybe, isJust, fromJust)
+import Data.Maybe (isJust, fromJust)
 import Data.IORef
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
@@ -9,7 +9,6 @@ import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
-import Language.Scheme.Core (evalLisp')
 import Language.Scheme.Types (Env, LispVal (Atom, String))
 import Control.Concurrent
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
@@ -37,7 +36,7 @@ viewer = let light0 = Light 0 in do
   initialDisplayMode $= [DoubleBuffered, RGBAMode, WithDepthBuffer]
   createWindow progname
 
-  state <- makeState
+  state <- makeState filename
 
 #ifdef RENDER_TO_TEXTURE
   -- Initialize "renderTexture"
@@ -120,15 +119,16 @@ viewer = let light0 = Light 0 in do
 #endif
 
   let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
-      initFunc = (initSchemeEnv extraPrimitives)
-  env <- initFunc filename
+      initFunc' = initSchemeEnv extraPrimitives
+  initFunc state $= Just initFunc'
+  env <- initFunc' filename
   environment state $= Just env
   displayCallback $= display state
-  idleCallback $= Just (idle state initFunc)
+  idleCallback $= Just (idle state)
   reshapeCallback $= Just (reshape state)
   motionCallback $= Just (motion state)
   mouseCallback $= Just (mouse state)
-  keyboardMouseCallback $= Just (keyboardMouse state initFunc)
+  keyboardMouseCallback $= Just (keyboardMouse state)
   mainLoop
 
 reshape state s@(Size w h) = do
@@ -274,39 +274,38 @@ display state = do
 #endif
   swapBuffers
 
---  writeTextureToFile fbTexture "test.png"
-
 -- |Idle function. Check modifcation date of the current source file
 --  and reload the environment when it has changed.
-idle state reinitFunc = do
+idle state = do
   now <- getCurrentTime
   lastCheckTime <- get $ lastReloadCheck state
-  when (diffUTCTime now lastCheckTime > 1) $ do
+  when (diffUTCTime now lastCheckTime > .5) $ do
     Just env <- get $ environment state
-    evalLisp' env (Atom "*source*") >>= \x -> case x of
-        Right (String source) -> do
-            modTime <- getModificationTime source
-            lastModTime <- get $ lastSourceModification state
-            when (lastModTime < modTime) $ do
-                putStrLn $ "Reloading " ++ source
-                (reinitFunc source) >>= (\e -> environment state $= Just e)
-            lastSourceModification state $= modTime
-        _ -> return ()
+    modTime <- getModificationTime (source state)
+    lastModTime <- get $ lastSourceModification state
+    when (lastModTime < modTime) $ actionReloadSource state
+    lastSourceModification state $= modTime
     lastReloadCheck state $= now
   postRedisplay Nothing
 
 -- |Reload scheme source by initialising a new environment and storing it in
 --  envRef.
-keyboardAct state reinitFunc (SpecialKey KeyF5) Down = do
+actionReloadSource state = do
   Just env <- get $ environment state
-  evalLisp' env (Atom "*source*") >>= \x -> case x of
-    Right (String source) -> (reinitFunc source) >>= (\e -> environment state $= Just e)
-    _ -> return ()
+  Just initFunc' <- get $ initFunc state
+  putStrLn $ "Notice: Reloading " ++ (source state) 
+  initFunc' (source state) >>= (\e -> environment state $= Just e)
 
--- |Reset top level rotation
-keyboardAct state reinitFunc (SpecialKey KeyF6) Down = do
+-- |Save last rendered screen texture to PNG file
+actionScreenshot state = do
+  let shotFilename = "flowskell-shot.png"
+  Just fbTexture <- get $ lastRenderTexture state
+  writeTextureToFile fbTexture shotFilename
+  putStrLn $ "Notice: Saved screenshot to " ++ shotFilename
+
+-- |Reset top level rotation (still incorrect)
+actionResetView state = do
   matrixMode $= Projection
-
   -- This is redundant and also incorrect.
   -- TODO:
   -- either save aspect or (width, height) or
@@ -319,11 +318,14 @@ keyboardAct state reinitFunc (SpecialKey KeyF6) Down = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
-keyboardAct _ _ _ _ = return ()
+keyboardAct state (SpecialKey KeyF5) Down = actionReloadSource state
+keyboardAct state (SpecialKey KeyF6) Down = actionResetView state
+keyboardAct state (SpecialKey KeyF7) Down = actionScreenshot state
+keyboardAct _ _ _ = return ()
 
-keyboardMouse st reinitFunc key state modifiers position = do
-  lastPosition st $= (Position (-1) (-1))
-  keyboardAct st reinitFunc key state
+keyboardMouse state key st modifiers position = do
+  lastPosition state $= (Position (-1) (-1))
+  keyboardAct state key st
 
 mouse state keystate mod pos@(Position x y) = do
   lastPosition state $= (Position (-1) (-1))

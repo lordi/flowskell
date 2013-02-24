@@ -36,7 +36,6 @@
 (define cyan    (vadd green blue))
 
 ; internal stuff
-(define *source* "")        ; source file of the current script
 (define *has-error* #f)     ; wether an error has occurred
 (define every-frame-entry-point
     (lambda ()

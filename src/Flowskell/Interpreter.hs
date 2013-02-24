@@ -28,7 +28,6 @@ initSchemeEnv extraPrimitives filename = do
   mapM_ (\file -> do
     result <- evalString env $ "(load \"" ++ escapeBackslashes file ++ "\")"
     putStrLn $ file ++ ": " ++ result) [fskLib, filename]
-  result <- evalString env $ "(define *source* \"" ++ escapeBackslashes filename ++ "\")"
   return env
 
 evalFrame env = do

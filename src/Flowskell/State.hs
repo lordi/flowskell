@@ -30,11 +30,13 @@ data State = State {
     lastPosition :: IORef Position,
     blurProgram :: IORef (Maybe Program),
     lastReloadCheck :: IORef C.UTCTime,
-    lastSourceModification :: IORef C.UTCTime
+    lastSourceModification :: IORef C.UTCTime,
+    source :: String,
+    initFunc :: IORef (Maybe (String -> IO Env))
     }
 
-makeState :: IO State
-makeState = do
+makeState :: String -> IO State
+makeState source' = do
     environment' <- newIORef Nothing
     rotation' <- newIORef (Vector3 0 0 (0 :: GLfloat))
     blurFactor' <- newIORef 0
@@ -48,6 +50,7 @@ makeState = do
     lastPosition' <- newIORef (Position (-1) (-1 :: GLint))
     lastReloadCheck' <- getCurrentTime >>= newIORef
     lastSourceModification' <- getCurrentTime >>= newIORef
+    initFunc' <- newIORef Nothing
     return State {
         environment = environment',
         rotation = rotation',
@@ -61,5 +64,7 @@ makeState = do
         lastRenderDepthBuffer = lastRenderDepthBuffer',
         depthBuffer = depthBuffer',
         lastReloadCheck = lastReloadCheck',
-        lastSourceModification = lastSourceModification'
+        lastSourceModification = lastSourceModification',
+        source = source',
+        initFunc = initFunc'
         }
