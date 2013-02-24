@@ -7,6 +7,7 @@ GL:
  * ~~Read http://www.arcadianvisions.com/blog/?p=224~~
  * ~~make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)~~
  * Fix performance issues (allocating texture, depth buffer, render-to-texture)
+ * Fonts?
 
 Scheme:
 
@@ -22,13 +23,13 @@ Viewer:
  * ~~be able to rotate top level with mouse~~ and cursor keys
  * optional code, fps display
  * ~~live code reloading, and fix F5 code reloading first~~
- * Have an option to render the n-th frame to a PNG file and quit, instead of screen output
+ * REPL
 
- Keys:
-   * F3: screenshot
-   * ~~F5: code reload~~
-   * F6: reset view matrix
-   * F11: fullscreen
+Keys:
+ * ~~F5: code reload~~
+ * ~~F6: reset view matrix~~
+ * ~~F7: screenshot~~
+ * F11: fullscreen
 
 Audio input:
  * ~~implement Jack capture~~
