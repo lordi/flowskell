@@ -279,7 +279,7 @@ display state = do
 idle state = do
   now <- getCurrentTime
   lastCheckTime <- get $ lastReloadCheck state
-  when (diffUTCTime now lastCheckTime > .5) $ do
+  when (diffUTCTime now lastCheckTime > 0.5) $ do
     Just env <- get $ environment state
     modTime <- getModificationTime (source state)
     lastModTime <- get $ lastSourceModification state
