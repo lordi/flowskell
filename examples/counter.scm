@@ -51,7 +51,7 @@
 (define start-secs (secs))
 
 (define (every-frame)
-  (let ((n (* 2 (- (secs) start-secs))))
+  (let ((n (- (secs) start-secs)))
     (scale 0.15)
     (rotate (* 2 (sin (secs))) y-axis)
     (translate (vector -8 0 0))
