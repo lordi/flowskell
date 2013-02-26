@@ -20,6 +20,7 @@ import Flowskell.ShaderUtils
 data State = State {
     rotation :: IORef (Vector3 GLfloat),
     environment :: IORef (Maybe Env),
+    initFunc :: IORef (Maybe (String -> IO Env)),
     blurFactor :: IORef GLfloat,
     renderTexture :: IORef (Maybe TextureObject),
     renderFramebuffer :: IORef (Maybe FramebufferObject),
@@ -29,10 +30,15 @@ data State = State {
     lastRenderDepthBuffer :: IORef (Maybe RenderbufferObject),
     lastPosition :: IORef Position,
     blurProgram :: IORef (Maybe Program),
+
+    source :: String,
     lastReloadCheck :: IORef C.UTCTime,
     lastSourceModification :: IORef C.UTCTime,
-    source :: String,
-    initFunc :: IORef (Maybe (String -> IO Env))
+
+    lastFrameCounterTime :: IORef C.UTCTime,
+    showFramesPerSecond :: IORef Bool,
+    frameCounter :: IORef Int,
+    framesPerSecond :: IORef Float
     }
 
 makeState :: String -> IO State
@@ -50,6 +56,10 @@ makeState source' = do
     lastPosition' <- newIORef (Position (-1) (-1 :: GLint))
     lastReloadCheck' <- getCurrentTime >>= newIORef
     lastSourceModification' <- getCurrentTime >>= newIORef
+    frameCounter' <- newIORef 0
+    framesPerSecond' <- newIORef 0
+    showFramesPerSecond' <- newIORef False
+    lastFrameCounterTime' <- getCurrentTime >>= newIORef
     initFunc' <- newIORef Nothing
     return State {
         environment = environment',
@@ -65,6 +75,10 @@ makeState source' = do
         depthBuffer = depthBuffer',
         lastReloadCheck = lastReloadCheck',
         lastSourceModification = lastSourceModification',
+        frameCounter = frameCounter',
+        framesPerSecond = framesPerSecond',
+        lastFrameCounterTime = lastFrameCounterTime',
+        showFramesPerSecond = showFramesPerSecond',
         source = source',
         initFunc = initFunc'
         }

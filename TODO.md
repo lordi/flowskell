@@ -23,13 +23,14 @@ Viewer:
  * ~~be able to rotate top level with mouse~~ and cursor keys
  * optional code, fps display
  * ~~live code reloading, and fix F5 code reloading first~~
- * REPL
-
-Keys:
- * ~~F5: code reload~~
- * ~~F6: reset view matrix~~
- * ~~F7: screenshot~~
- * F11: fullscreen
+ * Keys
+     * F1: show help
+     * F2: REPL
+     * ~~F3: show fps~~
+     * ~~F5: code reload~~
+     * ~~F6: reset view matrix~~
+     * ~~F7: screenshot~~
+     * F11: fullscreen
 
 Audio input:
  * ~~implement Jack capture~~

@@ -12,6 +12,7 @@ import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Types (Env, LispVal (Atom, String))
 import Control.Concurrent
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
+import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
 
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -181,6 +182,9 @@ unitFrame = do
 
 display state = do
   Just env <- get $ environment state
+  fc <- get $ frameCounter state
+  frameCounter state $= fc + 1
+
 #ifdef RENDER_TO_TEXTURE
   Just fbTexture <- get $ renderTexture state
   Just fbTexture2 <- get $ lastRenderTexture state
@@ -224,6 +228,18 @@ display state = do
   unitQuad
 
   currentProgram $= Nothing
+
+  showFPS <- get $ showFramesPerSecond state
+  when showFPS $ do
+      textureBinding Texture2D $= Nothing
+      matrixMode $= Modelview 0
+      preservingMatrix $ do
+          loadIdentity
+          setColor [1,1,1,0.6]
+          currentRasterPosition $= Vertex4 (-0.9) (-0.9) 0 (1::GLfloat)
+          fps <- get $ framesPerSecond state
+          renderString Fixed9By15 $ show (realToFrac (round (fps * 100.0)) / 100.0) ++ " FPS"
+
   textureFunction $= Replace
   flush
 
@@ -272,6 +288,7 @@ display state = do
   matrixMode $= Projection
   glPopMatrix
 #endif
+
   swapBuffers
 
 -- |Idle function. Check modifcation date of the current source file
@@ -279,6 +296,7 @@ display state = do
 idle state = do
   now <- getCurrentTime
   lastCheckTime <- get $ lastReloadCheck state
+  lastFPSTime <- get $ lastFrameCounterTime state
   when (diffUTCTime now lastCheckTime > 0.5) $ do
     Just env <- get $ environment state
     modTime <- getModificationTime (source state)
@@ -286,6 +304,12 @@ idle state = do
     when (lastModTime < modTime) $ actionReloadSource state
     lastSourceModification state $= modTime
     lastReloadCheck state $= now
+  when (diffUTCTime now lastFPSTime > 0.75) $ do
+    cnt <- get $ frameCounter state
+    framesPerSecond state $= (fromIntegral cnt / realToFrac (diffUTCTime now lastFPSTime))
+    frameCounter state $= 0
+    lastFrameCounterTime state $= now
+
   postRedisplay Nothing
 
 -- |Reload scheme source by initialising a new environment and storing it in
@@ -318,6 +342,11 @@ actionResetView state = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
+actionToggleFPS state = do
+  showFPS <- get $ showFramesPerSecond state
+  showFramesPerSecond state $= not showFPS
+
+keyboardAct state (SpecialKey KeyF3) Down = actionToggleFPS state
 keyboardAct state (SpecialKey KeyF5) Down = actionReloadSource state
 keyboardAct state (SpecialKey KeyF6) Down = actionResetView state
 keyboardAct state (SpecialKey KeyF7) Down = actionScreenshot state
