@@ -1,26 +1,64 @@
 -- module Flowskell.REPL where
 import Control.Monad.State
 
-data InputState = InputState { buffer :: String, cursorPosition :: Int } deriving Show
+data InputLine = InputLine { buffer :: String, cursorPosition :: Int } -- deriving Show
 
-input :: Char -> State InputState () --IO ()
-input chr = do
-    InputState { buffer = b, cursorPosition = c } <- get
-    put InputState { buffer = b ++ [chr], cursorPosition = c + 1 }
+instance Show InputLine where
+    show InputLine { buffer = b, cursorPosition = c } =
+            let (b1,b2) = splitAt c b in show $ b1 ++ "%" ++ b2
 
-backspace :: State InputState () --IO ()
-backspace = do
-    InputState { buffer = b, cursorPosition = c } <- get
-    put InputState { buffer = b, cursorPosition = c - 1 }
+inputStr str = mapM_ input str
 
-testInput :: State InputState ()
+input :: Char -> State InputLine ()
+input chr = modify $ \InputLine { buffer = b, cursorPosition = c } ->
+            let (b1,b2) = splitAt c b in
+            InputLine { buffer = b1 ++ [chr] ++ b2, cursorPosition = c + 1 }
+
+backspace :: State InputLine ()
+backspace = modify $ \il@InputLine { buffer = b, cursorPosition = c } ->
+            let (b1,b2) = splitAt c b in
+            il { buffer = (take (c - 1) b1) ++ b2, cursorPosition = max (c - 1) 0 }
+
+pos1 :: State InputLine ()
+pos1 = modify $ \il -> il { cursorPosition = 0 }
+
+end :: State InputLine ()
+end = modify $ \il@InputLine { buffer = b } -> il { cursorPosition = length b }
+
+del :: State InputLine ()
+del = modify $ \il@InputLine { buffer = b, cursorPosition = c } ->
+            let (b1,b2) = splitAt c b in il { buffer = b1 ++ (tail b2) }
+
+testInput :: State InputLine ()
 testInput = do
-    input 'a'
-    input 'a'
-    input 'c'
-    input 'a'
+    input 'k'
+    input 'e'
+    input 'l'
+    input 'l'
+    input 'o'
+    input 'i'
+    input 'p'
     backspace
+    backspace
+    input ' '
+    inputStr "world"
+    pos1
+    backspace
+    backspace
+    backspace
+    del
+    input 'h'
+    end
+    end
+    input '!'
+
+repl :: StateT InputLine IO ()
+repl = do
+    (liftIO . getChar) >>= input
+    (liftIO . getChar) >>= input
 
 main = do
-    ((), s) <- runState testInput $ InputState { buffer = "", cursorPosition = 0 }
-    print s
+    print $ runState testInput $ InputLine { buffer = "", cursorPosition = 0 }
+    runStateT InputLine repl $ InputLine { buffer = "", cursorPosition = 0 }
+
+    -- print s
