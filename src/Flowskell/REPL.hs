@@ -52,13 +52,14 @@ testInput = do
     end
     input '!'
 
-repl :: StateT InputLine IO ()
+repl :: State InputLine ()
 repl = do
-    (liftIO . getChar) >>= input
-    (liftIO . getChar) >>= input
+    input 'c'
 
+newInputLine = InputLine { buffer = "ha", cursorPosition = 0 }
 main = do
-    print $ runState testInput $ InputLine { buffer = "", cursorPosition = 0 }
-    runStateT InputLine repl $ InputLine { buffer = "", cursorPosition = 0 }
+--    print $ runState testInput $ InputLine { buffer = "", cursorPosition = 0 }
+    let il = newInputLine
+    print $ runState InputLine repl $ il
 
     -- print s
