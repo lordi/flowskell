@@ -43,7 +43,8 @@ data State = State {
 
     showHelp :: IORef Bool,
     showREPL :: IORef Bool,
-    replInputLine :: IORef InputLine
+    replInputLine :: IORef InputLine,
+    replLines :: IORef [String]
     }
 
 makeState :: String -> IO State
@@ -69,6 +70,7 @@ makeState source' = do
     showHelp' <- newIORef True
     showREPL' <- newIORef False
     replInputLine' <- newIORef newInputLine
+    replLines' <- newIORef []
     return State {
         environment = environment',
         rotation = rotation',
@@ -91,5 +93,6 @@ makeState source' = do
         initFunc = initFunc',
         showHelp = showHelp',
         showREPL = showREPL',
-        replInputLine = replInputLine'
+        replInputLine = replInputLine',
+        replLines = replLines'
         }

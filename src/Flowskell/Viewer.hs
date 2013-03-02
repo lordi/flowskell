@@ -1,5 +1,5 @@
 module Flowskell.Viewer where
-import Control.Monad (when)
+import Control.Monad (when, forM_)
 import Data.Maybe (isJust, fromJust)
 import Data.IORef
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
@@ -10,6 +10,7 @@ import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatri
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Types (Env, LispVal (Atom, String))
+import Language.Scheme.Core (evalString)
 import Control.Concurrent
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
@@ -256,6 +257,10 @@ display state = do
   onlyWhen showREPL $ do
       withTextMode $ do
           currentRasterPosition $= Vertex4 (-0.9) (0.8) 0 (1::GLfloat)
+          lines <- get $ replLines state
+          forM_ (zip [1..] (reverse (take 10 lines))) $ \ (i, l) -> do
+              renderString Fixed9By15 l
+              currentRasterPosition $= Vertex4 (-0.9) (0.8 - (fromIntegral i) * 0.1) 0 (1::GLfloat)
           il <- get $ replInputLine state
           renderString Fixed9By15 $ ">>> " ++ IL.showInputLine il
 
@@ -367,9 +372,19 @@ actionModifyInputLine fnc state = do
 actionToggle stateVar state = do
   (get $ stateVar state) >>= \x -> stateVar state $= not x
 
+actionEvalInputLine state = do
+  il <- get $ replInputLine state
+  env <- (get $ environment state) >>= return . fromJust
+  lines <- get $ replLines state
+  let inputString = IL.getInput il
+  result <- evalString env inputString
+  replLines state $= [result, ">>> " ++ inputString] ++ lines
+  replInputLine state $= IL.newInputLine
+
 -- Input line bindings
-keyboardAct state (Char '\b') Down = actionModifyInputLine (IL.backspace) state
-keyboardAct state (Char '\DEL') Down = actionModifyInputLine (IL.del) state
+keyboardAct state (Char '\b') Down = actionModifyInputLine IL.backspace state
+keyboardAct state (Char '\DEL') Down = actionModifyInputLine IL.del state
+keyboardAct state (Char '\r') Down = actionEvalInputLine state
 keyboardAct state (Char c) Down = actionModifyInputLine (IL.input c) state
 keyboardAct state (SpecialKey KeyLeft) Down = actionModifyInputLine IL.left state
 keyboardAct state (SpecialKey KeyRight) Down = actionModifyInputLine IL.right state
