@@ -1,19 +1,11 @@
 module Flowskell.Viewer where
-import Control.Monad (when, forM_)
-import Data.Maybe (isJust, fromJust)
-import Data.IORef
+import Control.Monad (when)
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
-import Graphics.Rendering.GLU.Raw
-import Graphics.Rendering.OpenGL.GL.FramebufferObjects
-import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
-import Language.Scheme.Types (Env, LispVal (Atom, String))
-import Language.Scheme.Core (evalString)
-import Control.Concurrent
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
+import System.Directory (getModificationTime)
 
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -25,18 +17,17 @@ import Flowskell.Lib.Textures (initTextures)
 import Flowskell.Lib.Shaders (initShaders)
 #endif
 
-import Graphics.Rendering.OpenGL.GL.Texturing.Environments
-import System.Directory (getModificationTime)
-
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
 import Flowskell.State
-import Flowskell.InputActions (actionReloadSource, motionHandler, mouseHandler, keyboardMouseHandler)
-import Flowskell.Display (initDisplay, reshapeHandler, displayHandler)
-import qualified Flowskell.InputLine as IL
+import Flowskell.InputActions (
+    actionReloadSource, motionHandler, mouseHandler,
+    keyboardMouseHandler)
+import Flowskell.Display (
+    initDisplay, reshapeHandler, displayHandler)
 
 viewer = do
-  (progname, [filename]) <- getArgsAndInitialize
+  (_, [filename]) <- getArgsAndInitialize
   state <- makeState filename
   initDisplay state
 

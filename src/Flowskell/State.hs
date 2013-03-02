@@ -67,7 +67,7 @@ makeState source' = do
     showFramesPerSecond' <- newIORef False
     lastFrameCounterTime' <- getCurrentTime >>= newIORef
     initFunc' <- newIORef Nothing
-    showHelp' <- newIORef True
+    showHelp' <- newIORef False
     showREPL' <- newIORef False
     replInputLine' <- newIORef newInputLine
     replLines' <- newIORef []

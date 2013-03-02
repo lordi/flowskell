@@ -23,6 +23,8 @@ Viewer:
  * ~~be able to rotate top level with mouse~~ and cursor keys
  * optional code, ~~fps display~~
  * ~~live code reloading, and fix F5 code reloading first~~
+ * Bugfix: Code reloading: do not crash when source does not exist anymore
+ * Bugfix: Do not write to REPL when it is hidden
  * Keys
      * ~~F1: show help~~
      * ~~F2: toggle REPL~~

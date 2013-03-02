@@ -4,36 +4,21 @@ module Flowskell.Display (
 import Control.Monad (when, forM_)
 import Data.Maybe (isJust, fromJust)
 import Data.IORef
+import Graphics.UI.GLUT hiding (Bool, Float)
+import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
-import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
-import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
-import Graphics.UI.GLUT hiding (Bool, Float)
+import Graphics.Rendering.OpenGL.GL.Texturing.Environments
+import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix) -- TODO check if these are really needed
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Types (Env, LispVal (Atom, String))
-import Language.Scheme.Core (evalString)
 import Control.Concurrent
-import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
-
-#ifdef USE_JACK
-import Flowskell.Lib.Jack (initJack)
-#endif
-#ifdef USE_TEXTURES
-import Flowskell.Lib.Textures (initTextures)
-#endif
-#ifdef RENDER_TO_TEXTURE
-import Flowskell.Lib.Shaders (initShaders)
-#endif
-
-import Graphics.Rendering.OpenGL.GL.Texturing.Environments
-import System.Directory (getModificationTime)
 
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
 import Flowskell.State
-import Flowskell.InputActions (actionReloadSource, motionHandler, mouseHandler, keyboardMouseHandler)
 import qualified Flowskell.InputLine as IL
 import qualified Flowskell.Constants as C
 
