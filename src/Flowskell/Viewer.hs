@@ -30,6 +30,10 @@ import System.Directory (getModificationTime)
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
 import Flowskell.State
+import qualified Flowskell.InputLine as IL
+
+helpText = "Flowskell 0.0.9 " ++
+    "| F1 Help | F2 REPL | F3 FPS | F5 Reload | F6 Reset view | F7 Screenshot"
 
 viewer = let light0 = Light 0 in do
   (progname, [filename]) <- getArgsAndInitialize
@@ -229,16 +233,31 @@ display state = do
 
   currentProgram $= Nothing
 
-  showFPS <- get $ showFramesPerSecond state
-  when showFPS $ do
+  let onlyWhen stateVar sth = (get $ stateVar state) >>= \x -> when x sth
+  let withTextMode sth = do
       textureBinding Texture2D $= Nothing
       matrixMode $= Modelview 0
       preservingMatrix $ do
           loadIdentity
-          setColor [1,1,1,0.6]
+          setColor [1,1,1,0.8]
+          sth
+
+  onlyWhen showFramesPerSecond $ do
+      withTextMode $ do
           currentRasterPosition $= Vertex4 (-0.9) (-0.9) 0 (1::GLfloat)
           fps <- get $ framesPerSecond state
           renderString Fixed9By15 $ show (realToFrac (round (fps * 100.0)) / 100.0) ++ " FPS"
+
+  onlyWhen showHelp $ do
+      withTextMode $ do
+          currentRasterPosition $= Vertex4 (-0.9) (0.9) 0 (1::GLfloat)
+          renderString Fixed9By15 helpText
+
+  onlyWhen showREPL $ do
+      withTextMode $ do
+          currentRasterPosition $= Vertex4 (-0.9) (0.8) 0 (1::GLfloat)
+          il <- get $ replInputLine state
+          renderString Fixed9By15 $ ">>> " ++ show il
 
   textureFunction $= Replace
   flush
@@ -342,11 +361,12 @@ actionResetView state = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
-actionToggleFPS state = do
-  showFPS <- get $ showFramesPerSecond state
-  showFramesPerSecond state $= not showFPS
+actionToggle stateVar state = do
+  (get $ stateVar state) >>= \x -> stateVar state $= not x
 
-keyboardAct state (SpecialKey KeyF3) Down = actionToggleFPS state
+keyboardAct state (SpecialKey KeyF1) Down = actionToggle showHelp state
+keyboardAct state (SpecialKey KeyF2) Down = actionToggle showREPL state
+keyboardAct state (SpecialKey KeyF3) Down = actionToggle showFramesPerSecond state
 keyboardAct state (SpecialKey KeyF5) Down = actionReloadSource state
 keyboardAct state (SpecialKey KeyF6) Down = actionResetView state
 keyboardAct state (SpecialKey KeyF7) Down = actionScreenshot state
