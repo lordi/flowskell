@@ -7,7 +7,7 @@ GL:
  * ~~Read http://www.arcadianvisions.com/blog/?p=224~~
  * ~~make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)~~
  * Fix performance issues (allocating texture, depth buffer, render-to-texture)
- * Fonts?
+ * ~~Fonts? using simple glut fonts for now~~
 
 Scheme:
 
@@ -21,13 +21,14 @@ Scheme:
 Viewer:
 
  * ~~be able to rotate top level with mouse~~ and cursor keys
- * optional code, fps display
+ * optional code, ~~fps display~~
  * ~~live code reloading, and fix F5 code reloading first~~
  * Keys
-     * F1: show help
-     * F2: REPL
-     * ~~F3: show fps~~
-     * ~~F5: code reload~~
+     * ~~F1: show help~~
+     * ~~F2: toggle REPL~~
+     * ~~F3: toggle fps~~
+     * F4: toggle source
+     * ~~F5: source reload~~
      * ~~F6: reset view matrix~~
      * ~~F7: screenshot~~
      * F11: fullscreen
