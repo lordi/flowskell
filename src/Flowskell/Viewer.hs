@@ -257,7 +257,7 @@ display state = do
       withTextMode $ do
           currentRasterPosition $= Vertex4 (-0.9) (0.8) 0 (1::GLfloat)
           il <- get $ replInputLine state
-          renderString Fixed9By15 $ ">>> " ++ show il
+          renderString Fixed9By15 $ ">>> " ++ IL.showInputLine il
 
   textureFunction $= Replace
   flush
@@ -361,9 +361,22 @@ actionResetView state = do
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 
+actionModifyInputLine fnc state = do
+  (get $ replInputLine state) >>= \x -> replInputLine state $= fnc x
+
 actionToggle stateVar state = do
   (get $ stateVar state) >>= \x -> stateVar state $= not x
 
+-- Input line bindings
+keyboardAct state (Char '\b') Down = actionModifyInputLine (IL.backspace) state
+keyboardAct state (Char '\DEL') Down = actionModifyInputLine (IL.del) state
+keyboardAct state (Char c) Down = actionModifyInputLine (IL.input c) state
+keyboardAct state (SpecialKey KeyLeft) Down = actionModifyInputLine IL.left state
+keyboardAct state (SpecialKey KeyRight) Down = actionModifyInputLine IL.right state
+keyboardAct state (SpecialKey KeyHome) Down = actionModifyInputLine IL.pos1 state
+keyboardAct state (SpecialKey KeyEnd) Down = actionModifyInputLine IL.end state
+
+-- Function key bindings
 keyboardAct state (SpecialKey KeyF1) Down = actionToggle showHelp state
 keyboardAct state (SpecialKey KeyF2) Down = actionToggle showREPL state
 keyboardAct state (SpecialKey KeyF3) Down = actionToggle showFramesPerSecond state

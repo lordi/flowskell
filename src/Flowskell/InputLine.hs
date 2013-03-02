@@ -2,6 +2,7 @@
 module Flowskell.InputLine (
     InputLine,
     newInputLine,
+    showInputLine,
     getInput,
     input, backspace, pos1, end, del, left, right
     ) where
@@ -12,6 +13,8 @@ import Data.Char
 type InputLine = (String    -- String before cursor
                 , String)   -- String after cursor
 type InputLineModifier = InputLine -> InputLine
+
+showInputLine (b, a) = b ++ "|" ++ a
 
 newInputLine :: InputLine
 newInputLine = ("", "")
