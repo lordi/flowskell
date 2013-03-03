@@ -25,6 +25,8 @@ Viewer:
  * ~~live code reloading, and fix F5 code reloading first~~
  * Bugfix: Code reloading: do not crash when source does not exist anymore
  * Bugfix: Do not write to REPL when it is hidden
+ * Bugfix: Fix encoding in REPL
+ * Funky cursor in REPL instead of pipe
  * Keys
      * ~~F1: show help~~
      * ~~F2: toggle REPL~~
