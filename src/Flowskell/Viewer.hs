@@ -1,18 +1,11 @@
 module Flowskell.Viewer where
 import Control.Monad (when)
-import Data.Maybe (isJust, fromJust)
-import Data.IORef
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
-import Graphics.Rendering.GLU.Raw
-import Graphics.Rendering.OpenGL.GL.FramebufferObjects
-import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
-import Language.Scheme.Types (Env, LispVal (Atom, String))
-import Control.Concurrent
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
+import System.Directory (getModificationTime)
 
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -24,60 +17,21 @@ import Flowskell.Lib.Textures (initTextures)
 import Flowskell.Lib.Shaders (initShaders)
 #endif
 
-import Graphics.Rendering.OpenGL.GL.Texturing.Environments
-import System.Directory (getModificationTime)
-
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
 import Flowskell.State
+import Flowskell.InputActions (
+    actionReloadSource, motionHandler, mouseHandler,
+    keyboardMouseHandler)
+import Flowskell.Display (
+    initDisplay, reshapeHandler, displayHandler)
 
-viewer = let light0 = Light 0 in do
-  (progname, [filename]) <- getArgsAndInitialize
-
-  initialDisplayMode $= [DoubleBuffered, RGBAMode, WithDepthBuffer]
-  createWindow progname
-
+viewer = do
+  (_, [filename]) <- getArgsAndInitialize
   state <- makeState filename
+  initDisplay state
 
 #ifdef RENDER_TO_TEXTURE
-  -- Initialize "renderTexture"
-  [fbo] <- genObjectNames 1
-  (Just fbTexture) <- createBlankTexture (1, 1)
-  bindFramebuffer Framebuffer $= fbo
-  framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture 0
-
-  -- Initialize Depth Buffer" for renderTexture
-  [drb] <- genObjectNames 1
-  bindRenderbuffer Renderbuffer $= drb
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize 1 1)
-  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb
-
-  -- Initialize "lastRenderTexture"
-  [fbo2] <- genObjectNames 1
-  (Just fbTexture2) <- createBlankTexture (1, 1)
-  bindFramebuffer Framebuffer $= fbo2
-  framebufferTexture2D Framebuffer (ColorAttachment 0) Nothing fbTexture2 0
-
-  -- Initialize Depth Buffer for lastRenderTexture
-  [drb2] <- genObjectNames 1
-  bindRenderbuffer Renderbuffer $= drb2
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize 1 1)
-  framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb2
-
-  -- Initialize blur shader
-  checkGLSLSupport
-  prg <- readCompileAndLink "shaders/fade.vert" "shaders/fade.frag"
-
-  -- Store all in state
-  renderTexture state $= Just fbTexture
-  renderFramebuffer state $= Just fbo
-  depthBuffer state $= Just drb
-  lastRenderTexture state $= Just fbTexture2
-  lastRenderFramebuffer state $= Just fbo2
-  lastRenderDepthBuffer state $= Just drb2
-  blurProgram state $= Just prg
-
-  bindFramebuffer Framebuffer $= fbo
   shaderIOPrimitives <- initShaders state
 #else
   shaderIOPrimitives <- return []
@@ -95,201 +49,25 @@ viewer = let light0 = Light 0 in do
   jackIOPrimitives <- return []
 #endif
 
-  ambient light0 $= Color4 0.2 0.2 0.2 1
-  diffuse light0 $= Color4 1 1 1 0.6
-  position light0 $= Vertex4 0 0 3 0
-  lightModelAmbient $= Color4 0.2 0.2 0.2 1
-  lightModelLocalViewer $= Disabled
-  materialShininess Front $= 0.0
-  shadeModel $= Smooth
-  frontFace $= CW
-  lighting $= Enabled
-  light light0 $= Enabled
-  autoNormal $= Enabled
-  normalize $= Enabled
-  depthFunc $= Just Less
-  -- cullFace $= Just Back
-
-  blend $= Enabled
-  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
-
-#ifdef DEBUG
-  clearColor $= Color4 0.5 0.5 0.5 0.5
-#else
-  clearColor $= Color4 0 0 0 1
-#endif
-
   let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
       initFunc' = initSchemeEnv extraPrimitives
   initFunc state $= Just initFunc'
   env <- initFunc' filename
   environment state $= Just env
-  displayCallback $= display state
   idleCallback $= Just (idle state)
-  reshapeCallback $= Just (reshape state)
-  motionCallback $= Just (motion state)
-  mouseCallback $= Just (mouse state)
-  keyboardMouseCallback $= Just (keyboardMouse state)
+
+  -- Flowskell.Display
+  displayCallback $= displayHandler state
+  reshapeCallback $= Just (reshapeHandler state)
+
+  -- Flowskell.InputActions
+  motionCallback $= Just (motionHandler state)
+  mouseCallback $= Just (mouseHandler state)
+  keyboardMouseCallback $= Just (keyboardMouseHandler state)
+
+  -- GLUT main loop
   mainLoop
 
-reshape state s@(Size w h) = do
-  viewport $= (Position 0 0, s)
-  matrixMode $= Projection
-  loadIdentity
-  let fov = 60
-      near = 0.01
-      far = 100
-      aspect = (fromIntegral w) / (fromIntegral h)
-  perspective fov aspect near far
-  translate $ Vector3 0 0 (-1::GLfloat)
-
-#ifdef RENDER_TO_TEXTURE
-  -- We need to resize the framebuffer textures, because the window size
-  -- might have changed. Unfortunately, this may take a while.
-  -- TODO: find a faster way
-  Just fbTexture <- get $ renderTexture state
-  Just fbTexture2 <- get $ lastRenderTexture state
-  Just drb <- get $ depthBuffer state
-  Just drb2 <- get $ lastRenderDepthBuffer state
-
-  putStrLn $ "Notice: Resizing all texture buffers to " ++ (show s)
-  setTextureSize fbTexture (TextureSize2D w h)
-  setTextureSize fbTexture2 (TextureSize2D w h)
-  bindRenderbuffer Renderbuffer $= drb
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
-  bindRenderbuffer Renderbuffer $= drb2
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
-#endif
-
-unitQuad = do
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive Quads $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1) (-1)   0 )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1)   1    0 )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1    1    0 )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1  (-1)   0 )
-
-unitFrame = do
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive LineStrip $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0  )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0  )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0  )
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
-
-display state = do
-  Just env <- get $ environment state
-  fc <- get $ frameCounter state
-  frameCounter state $= fc + 1
-
-#ifdef RENDER_TO_TEXTURE
-  Just fbTexture <- get $ renderTexture state
-  Just fbTexture2 <- get $ lastRenderTexture state
-  Just fbo <- get $ renderFramebuffer state
-  Just fbo2 <- get $ lastRenderFramebuffer state
-  Just prg <- get $ blurProgram state
-  Just drb <- get $ depthBuffer state
-  blurF <- get $ blurFactor state
-  bindFramebuffer Framebuffer $= fbo
-  depthFunc $= Just Less
-
-#endif
-  clear [ColorBuffer, DepthBuffer]
-
-  textureBinding Texture2D $= Nothing
-
-  matrixMode $= Modelview 0
-  loadIdentity
-  translate $ Vector3 0 0 (-1::GLfloat)
-
-  preservingMatrix $ do
-    evalFrame env
-
-#ifdef RENDER_TO_TEXTURE
-  --
-  -- Blend the last frame over the current scene, with fade factor
-  --
-  depthFunc $= Just Always
-  matrixMode $= Projection
-  glPushMatrix -- Save original matrix
-  loadIdentity
-
-  currentProgram $= Just prg
-  let setUniform var val = do
-      location <- get (uniformLocation prg var)
-      reportErrors
-      uniform location $= val
-  setUniform "amt" (Index1 blurF)
-
-  textureBinding Texture2D $= Just fbTexture2
-  unitQuad
-
-  currentProgram $= Nothing
-
-  showFPS <- get $ showFramesPerSecond state
-  when showFPS $ do
-      textureBinding Texture2D $= Nothing
-      matrixMode $= Modelview 0
-      preservingMatrix $ do
-          loadIdentity
-          setColor [1,1,1,0.6]
-          currentRasterPosition $= Vertex4 (-0.9) (-0.9) 0 (1::GLfloat)
-          fps <- get $ framesPerSecond state
-          renderString Fixed9By15 $ show (realToFrac (round (fps * 100.0)) / 100.0) ++ " FPS"
-
-  textureFunction $= Replace
-  flush
-
-  --
-  -- Now, render the just finished scene also to "last frame buffer"
-  --
-  bindFramebuffer Framebuffer $= fbo2
-  clear [ColorBuffer, DepthBuffer]
-  textureBinding Texture2D $= Just fbTexture
-  unitQuad
-  flush
-
-#ifdef DEBUG
-  -- Debug frame
-  textureBinding Texture2D $= Nothing
-  color (Color3 1.0 1.0 1.0 :: Color3 GLfloat)
-  lineStipple $= Nothing
-  lighting $= Disabled
-  unitFrame
-#endif
-
-  bindFramebuffer Framebuffer $= defaultFramebufferObject
-  textureBinding Texture2D $= Just fbTexture
-  matrixMode $= Projection
-  loadIdentity
-  let fov = 92
-      near = 0.001
-      far = 1000
-      aspect = 1
-  perspective fov aspect near far
-
-  clear [ ColorBuffer, DepthBuffer ]
-  depthFunc $= Just Always
-  unitQuad
-
-#ifdef DEBUG
-  -- Debug frame
-  textureBinding Texture2D $= Nothing
-  color $ (Color4 1 1 1 (1 ::GLfloat))
-  lineStipple $= Just (1, 0x1C47)
-  lighting $= Disabled
-  unitFrame
-  lighting $= Enabled
-#endif
-
-  matrixMode $= Projection
-  glPopMatrix
-#endif
-
-  swapBuffers
 
 -- |Idle function. Check modifcation date of the current source file
 --  and reload the environment when it has changed.
@@ -311,62 +89,4 @@ idle state = do
     lastFrameCounterTime state $= now
 
   postRedisplay Nothing
-
--- |Reload scheme source by initialising a new environment and storing it in
---  envRef.
-actionReloadSource state = do
-  Just env <- get $ environment state
-  Just initFunc' <- get $ initFunc state
-  putStrLn $ "Notice: Reloading " ++ (source state) 
-  initFunc' (source state) >>= (\e -> environment state $= Just e)
-
--- |Save last rendered screen texture to PNG file
-actionScreenshot state = do
-  let shotFilename = "flowskell-shot.png"
-  Just fbTexture <- get $ lastRenderTexture state
-  writeTextureToFile fbTexture shotFilename
-  putStrLn $ "Notice: Saved screenshot to " ++ shotFilename
-
--- |Reset top level rotation (still incorrect)
-actionResetView state = do
-  matrixMode $= Projection
-  -- This is redundant and also incorrect.
-  -- TODO:
-  -- either save aspect or (width, height) or
-  -- original transform matrix in state
-  loadIdentity
-  let fov = 60
-      near = 0.01
-      far = 100
-      aspect = 1
-  perspective fov aspect near far
-  translate $ Vector3 0 0 (-1::GLfloat)
-
-actionToggleFPS state = do
-  showFPS <- get $ showFramesPerSecond state
-  showFramesPerSecond state $= not showFPS
-
-keyboardAct state (SpecialKey KeyF3) Down = actionToggleFPS state
-keyboardAct state (SpecialKey KeyF5) Down = actionReloadSource state
-keyboardAct state (SpecialKey KeyF6) Down = actionResetView state
-keyboardAct state (SpecialKey KeyF7) Down = actionScreenshot state
-keyboardAct _ _ _ = return ()
-
-keyboardMouse state key st modifiers position = do
-  lastPosition state $= (Position (-1) (-1))
-  keyboardAct state key st
-
-mouse state keystate mod pos@(Position x y) = do
-  lastPosition state $= (Position (-1) (-1))
-
-motion :: State -> MotionCallback
-motion state pos@(Position x y) = do
-  postRedisplay Nothing
-  Position xt yt <- get (lastPosition state)
-  lastPosition state $= pos
-  when (xt /= -1 || yt /= -1) $ do
-     let Vector3 xl yl _ = Vector3 (fromIntegral (x - xt)) (fromIntegral (y - yt)) 0
-     matrixMode $= Projection
-     rotate (yl / 10.0) (Vector3 (-1) 0 (0 :: GLfloat))
-     rotate (xl / 10.0) (Vector3 0 (-1) (0 :: GLfloat))
 

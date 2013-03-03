@@ -69,7 +69,7 @@ createBlankTexture (width, height) =
     textureFunction $= Decal
     textureWrapMode Texture2D S $= (Repeated, Repeat)
     textureWrapMode Texture2D T $= (Repeated, Repeat)
-    textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
+    textureFilter Texture2D $= ((Linear', Nothing), Linear')
     texture Texture2D $= Enabled
     setTextureSize texName size
     return (Just texName)
@@ -89,7 +89,7 @@ getAndCreateTexture fileName = do
     textureFunction $= Decal
     textureWrapMode Texture2D S $= (Repeated, Repeat)
     textureWrapMode Texture2D T $= (Repeated, Repeat)
-    textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
+    textureFilter Texture2D $= ((Linear', Nothing), Linear')
     texture Texture2D $= Enabled
     loadImage fileName   
     return (Just texName)

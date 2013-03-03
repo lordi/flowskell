@@ -14,6 +14,7 @@ import qualified Data.Time.Clock as C
 
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
+import Flowskell.InputLine (InputLine, newInputLine)
 
 -- State data
 -- TODO: Try to implement HasGetter/HasSetter for MVar instead IORef (Maybe ...)
@@ -38,7 +39,12 @@ data State = State {
     lastFrameCounterTime :: IORef C.UTCTime,
     showFramesPerSecond :: IORef Bool,
     frameCounter :: IORef Int,
-    framesPerSecond :: IORef Float
+    framesPerSecond :: IORef Float,
+
+    showHelp :: IORef Bool,
+    showREPL :: IORef Bool,
+    replInputLine :: IORef InputLine,
+    replLines :: IORef [String]
     }
 
 makeState :: String -> IO State
@@ -61,6 +67,10 @@ makeState source' = do
     showFramesPerSecond' <- newIORef False
     lastFrameCounterTime' <- getCurrentTime >>= newIORef
     initFunc' <- newIORef Nothing
+    showHelp' <- newIORef False
+    showREPL' <- newIORef False
+    replInputLine' <- newIORef newInputLine
+    replLines' <- newIORef []
     return State {
         environment = environment',
         rotation = rotation',
@@ -80,5 +90,9 @@ makeState source' = do
         lastFrameCounterTime = lastFrameCounterTime',
         showFramesPerSecond = showFramesPerSecond',
         source = source',
-        initFunc = initFunc'
+        initFunc = initFunc',
+        showHelp = showHelp',
+        showREPL = showREPL',
+        replInputLine = replInputLine',
+        replLines = replLines'
         }
