@@ -13,13 +13,14 @@ Build Flowskell
 Run Flowskell
 -------------
 
-    export PATH=$PATH:~/.cabal/bin
+Make sure that the cabal binary path (usually `~/.cabal/bin/`) is in your `$PATH`. You can then simply run a Scheme file from the `examples/` directory like this:
+
     flowskell examples/donuts.scm
 
 Interaction
 -----------
 
-While Flowskell is running, you have the following shortcuts available:
+While Flowskell is running, the following keyboard shortcuts are available:
 
  * F1: Toggle help
  * F2: Toggle Scheme REPL
