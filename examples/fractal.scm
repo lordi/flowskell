@@ -1,4 +1,3 @@
-(blur 0.3)
 (define *mosaic* (load-texture "examples/img/mosaic.png"))
 (define (every-frame)
     (rotate -15 x-axis)
