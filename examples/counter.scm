@@ -7,7 +7,7 @@
 ; Load textures from 0 to 15
 (define numbers
     (map (lambda (n)
-        (load-texture (string-append "examples/img/number-" (number->string n) ".png"))
+        (load-texture (string-append "examples/img/numbers/number-" (number->string n) ".png"))
         )
     (range 15)))
 
