@@ -18,7 +18,7 @@ import Paths_Flowskell
 
 defaultPrimitives = timeIOPrimitives ++ glIOPrimitives ++ randomIOPrimitives ++ colorIOPrimitives ++ mathIOPrimitives
 
-mkPrimitiveList b = map (\(n, f) -> (("v", n), IOFunc $ makeThrowErrorFunc f)) b
+mkPrimitiveList b = map (\(n, f) -> (('v', n), IOFunc $ makeThrowErrorFunc f)) b
                 where makeThrowErrorFunc f obj = liftIO $ f obj
 
 initSchemeEnv extraPrimitives filename = do
