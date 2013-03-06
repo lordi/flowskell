@@ -6,12 +6,16 @@ import Control.Exception
 import Data.Foldable ( Foldable, sum )
 import Data.IORef
 import Data.Maybe (fromJust)
+import Data.Array (elems)
 import Graphics.UI.GLUT hiding (Float)
 
 import Language.Scheme.Types
 import Flowskell.State (State(..))
 import Flowskell.SchemeUtils (extractFloat)
 import Flowskell.ShaderUtils (readCompileAndLink)
+
+extractGLfloat :: LispVal -> GLfloat
+extractGLfloat = realToFrac . extractFloat
 
 loadShader :: IORef [Maybe Program] -> [LispVal] -> IO LispVal
 loadShader shdLstRef [String vert, String frag] = do 
@@ -40,6 +44,16 @@ setUniform shdLstRef [String name, f@(Float _)] = do
                             uniform location $= val
                         setUniform name (Index1 ((extractFloat f) :: GLfloat))
                         return (Number 1)
+setUniform shdLstRef [String name, (Vector v)] = do
+                        Just prg <- get currentProgram
+                        let [x, y, z] = map extractGLfloat (elems v)
+                            setUniform var val = do
+                              location <- get (uniformLocation prg var)
+                              reportErrors
+                              uniform location $= val
+                        setUniform name (Vertex3 x y z)
+                        return (Number 1)
+
 
 doBlur :: State -> [LispVal] -> IO LispVal
 doBlur state [n] = do

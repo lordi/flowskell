@@ -1,49 +1,74 @@
-(define *red-tint* (load-shader "red-tint"))
-(define *fade* (load-shader "fade"))
-(define *t* (load-shader "texture"))
+;;
+;; Demonstrates the use of four different GLSL shaders
+;;
+
+;; Load shaders
+(define *tint* (load-shader "tint"))
+(define *texture* (load-shader "texture"))
+(define *translate* (load-shader "translate"))
+(define *edge* (load-shader "edge"))
+
+;; Load textures
 (define *smiley* (load-texture "examples/img/smiley.png"))
+
+;; Helper functions
 (define (setup-view)
-        (scale 0.25)
-        (rotate -45.0 x-axis)
-        (rotate (modulo (/ (msecs) 20) 360) z-axis))
+    (scale 0.25)
+    (rotate -45.0 x-axis)
+    (rotate (modulo (/ (msecs) 20) 360) z-axis))
 (define (unify n) (+ 0.5 (* 0.5 n)))
+
+;; Construct the scene
 (define (every-frame)
-    (texture 0)
+    (texture *smiley*)
     (color white)
-    (shader)
     (push)
-        (scale (+ 1 (* 0.5 (sin (secs)))))
+        (scale (+ 1.2 (* 0.25 (sin (secs)))))
         (draw-plane)
     (pop)
 
-    (texture 0)
-    ;; First shader: red-tint
     (push)
-        (shader *red-tint*)
-        (set-uniform "alpha" (unify (sin (secs))))
-        (texture)
+        (shader *tint*)
+        (set-uniform "alpha" (max 0.2 (unify (cos (secs)))))
+        (set-uniform "tintColor" (hsv (/ (msecs) 10.0)))
         (translate (vector 0.5 0.5 0.5))
         (setup-view)
         (draw-cube)
     (pop)
 
     (push)
-        (shader *red-tint*)
-        (set-uniform "alpha" (unify (sin (secs))))
-        (texture)
+        (shader *edge*)
+        (texture *smiley*)
+        (set-uniform "x" (% (secs) 1))
+        (set-uniform "y" (sin (secs)))
         (translate (vector -0.5 0.5 0.5))
         (setup-view)
         (draw-cube)
     (pop)
 
     (push)
-        (shader *t*)
-        (texture *smiley*)
-        (set-uniform "alpha" (unify (sin (secs))))
+        (shader *texture*)
+        (set-uniform "alpha" (min 0.8 (unify (sin (secs)))))
         (translate (vector -0.5 -0.5 0.5))
         (setup-view)
         (draw-cube)
     (pop)
 
-
+    (push)
+        (shader *translate*)
+        (set-uniform "x" (% (secs) 1))
+        (set-uniform "y" (sin (secs)))
+        (translate (vector 0.5 -0.5 0.5))
+        (setup-view)
+        (draw-cube)
+    (pop)
     )
+
+(display "*********************************************") (newline)
+(display "* GLSL Shader demonstration") (newline)
+(display "*********************************************") (newline)
+(display "* Top left: Edge detection") (newline)
+(display "* Top right: Tint texture with color+alpha") (newline)
+(display "* Bottom left: Modify alpha") (newline)
+(display "* Bottom right: Translate texture") (newline)
+(display "*********************************************") (newline)
