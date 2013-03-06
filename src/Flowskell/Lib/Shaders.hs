@@ -5,7 +5,8 @@ import Control.Monad
 import Control.Exception
 import Data.Foldable ( Foldable, sum )
 import Data.IORef
-import Graphics.UI.GLUT
+import Data.Maybe (fromJust)
+import Graphics.UI.GLUT hiding (Float)
 
 import Language.Scheme.Types
 import Flowskell.State (State(..))
@@ -15,7 +16,6 @@ import Flowskell.ShaderUtils (readCompileAndLink)
 loadShader :: IORef [Maybe Program] -> [LispVal] -> IO LispVal
 loadShader shdLstRef [String vert, String frag] = do 
                         shdLst <- get shdLstRef
-                        print "x"
                         prg <- readCompileAndLink vert frag
                         writeIORef shdLstRef (shdLst ++ [Just prg])
                         return $ Number (fromIntegral (length shdLst))
@@ -25,23 +25,21 @@ loadShader shdLstRef [String name] = do
                               frag = "shaders/" ++ name ++ ".frag"
 
 setShader :: IORef [Maybe Program] -> [LispVal] -> IO LispVal
---setShader shdLstRef [Number n, List uniforms@[String _, _]] = do
---                        shdLst <- get shdLstRef
---                        -- TODO: check bounds
---                        let prg = shdLst !! (fromIntegral n)
---                            setUniform var val = do
---                              location <- get (uniformLocation prg var)
---                              reportErrors
---                              uniform location $= val
---                        setUniform "amt" (Index1 0.2)
---                        currentProgram $= prg
---                        return (Number 1)
 setShader shdLstRef [Number n] = do
                         shdLst <- get shdLstRef
                         -- TODO: check bounds
                         currentProgram $= shdLst !! (fromIntegral n)
                         return (Number 1)
 setShader shdLstRef [] = setShader shdLstRef [Number 0]
+
+setUniform shdLstRef [String name, f@(Float _)] = do
+                        Just prg <- get currentProgram
+                        let setUniform var val = do
+                            location <- get (uniformLocation prg var)
+                            reportErrors
+                            uniform location $= val
+                        setUniform name (Index1 ((extractFloat f) :: GLfloat))
+                        return (Number 1)
 
 doBlur :: State -> [LispVal] -> IO LispVal
 doBlur state [n] = do
@@ -54,6 +52,7 @@ initShaders state = do
     return  [
         ("load-shader", loadShader shdLstRef),
         ("shader", setShader shdLstRef),
+        ("set-uniform", setUniform shdLstRef),
         ("blur", doBlur state)
       ]
 

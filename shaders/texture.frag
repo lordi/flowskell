@@ -1,6 +1,8 @@
 uniform sampler2D colorMap;
+uniform float alpha;
 
 void main (void)
 {
-	gl_FragColor = texture2D( colorMap, gl_TexCoord[0].st);
+	vec3 pixelColor = vec3(texture2D( colorMap, gl_TexCoord[0].st));
+	gl_FragColor = vec4(pixelColor, alpha);
 }
