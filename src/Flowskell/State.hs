@@ -6,7 +6,6 @@ import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Language.Scheme.Types (Env)
 
 import Data.Time.Clock (getCurrentTime)
@@ -21,6 +20,7 @@ import Flowskell.InputLine (InputLine, newInputLine)
 data State = State {
     rotation :: IORef (Vector3 GLfloat),
     environment :: IORef (Maybe Env),
+    lastEnvironment :: IORef (Maybe Env),
     initFunc :: IORef (Maybe (String -> IO Env)),
     blurFactor :: IORef GLfloat,
     renderTexture :: IORef (Maybe TextureObject),
@@ -50,6 +50,7 @@ data State = State {
 makeState :: String -> IO State
 makeState source' = do
     environment' <- newIORef Nothing
+    lastEnvironment' <- newIORef Nothing
     rotation' <- newIORef (Vector3 0 0 (0 :: GLfloat))
     blurFactor' <- newIORef 0
     renderTexture' <- newIORef Nothing
@@ -73,6 +74,7 @@ makeState source' = do
     replLines' <- newIORef []
     return State {
         environment = environment',
+        lastEnvironment = lastEnvironment',
         rotation = rotation',
         blurFactor = blurFactor',
         renderTexture = renderTexture',

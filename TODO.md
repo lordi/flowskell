@@ -30,9 +30,9 @@ Viewer:
      * Funky cursor in REPL instead of pipe
  * Code reloading
      * ~~live code reloading, and fix F5 code reloading first~~
-     * Bugfix: Code reloading: do not crash when source does not exist anymore
+     * ~~Bugfix: Code reloading: do not crash when source does not exist anymore~~
      * Remember path to all shader sources, and also do a reload of these
-     * + more robust error handling (do not exit on Scheme/GLSL error, or better yet: rewind to old environment)
+     * ~~+ more robust error handling (do not exit on Scheme/GLSL error, or better yet: rewind to old environment)~~
  * Keys
      * ~~F1: show help~~
      * ~~F2: toggle REPL~~

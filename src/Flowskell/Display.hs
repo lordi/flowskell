@@ -12,7 +12,6 @@ import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.GL.Texturing.Environments
 import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix) -- TODO check if these are really needed
 import Flowskell.Interpreter (initSchemeEnv, evalFrame)
-import Language.Scheme.Types (Env, LispVal (Atom, String))
 import Control.Concurrent
 import Flowskell.Lib.GL (setColor) -- TODO move to GLUtils.hs
 
@@ -166,7 +165,7 @@ displayHandler state = do
   translate $ Vector3 0 0 (-1::GLfloat)
 
   preservingMatrix $ do
-    evalFrame env
+    evalFrame state env
 
 #ifdef RENDER_TO_TEXTURE
   --

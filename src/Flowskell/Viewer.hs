@@ -3,9 +3,8 @@ import Control.Monad (when)
 import Graphics.Rendering.OpenGL hiding (Bool, Float)
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Flowskell.Interpreter (initSchemeEnv, evalFrame)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import System.Directory (getModificationTime)
+import System.Directory (getModificationTime, doesFileExist)
 
 #ifdef USE_JACK
 import Flowskell.Lib.Jack (initJack)
@@ -20,6 +19,7 @@ import Flowskell.Lib.Shaders (initShaders)
 import Flowskell.TextureUtils
 import Flowskell.ShaderUtils
 import Flowskell.State
+import Flowskell.Interpreter (initSchemeEnv)
 import Flowskell.InputActions (
     actionReloadSource, motionHandler, mouseHandler,
     keyboardMouseHandler)
@@ -73,15 +73,18 @@ viewer = do
 --  and reload the environment when it has changed.
 idle state = do
   now <- getCurrentTime
+
   lastCheckTime <- get $ lastReloadCheck state
-  lastFPSTime <- get $ lastFrameCounterTime state
   when (diffUTCTime now lastCheckTime > 0.5) $ do
     Just env <- get $ environment state
-    modTime <- getModificationTime (source state)
-    lastModTime <- get $ lastSourceModification state
-    when (lastModTime < modTime) $ actionReloadSource state
-    lastSourceModification state $= modTime
-    lastReloadCheck state $= now
+    doesFileExist (source state) >>= \x -> when x $ do
+      modTime <- getModificationTime (source state)
+      lastModTime <- get $ lastSourceModification state
+      when (lastModTime < modTime) $ actionReloadSource state
+      lastSourceModification state $= modTime
+      lastReloadCheck state $= now
+
+  lastFPSTime <- get $ lastFrameCounterTime state
   when (diffUTCTime now lastFPSTime > 0.75) $ do
     cnt <- get $ frameCounter state
     framesPerSecond state $= (fromIntegral cnt / realToFrac (diffUTCTime now lastFPSTime))

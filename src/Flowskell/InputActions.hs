@@ -18,7 +18,9 @@ actionReloadSource state = do
   Just env <- get $ environment state
   Just initFunc' <- get $ initFunc state
   putStrLn $ "Notice: Reloading " ++ (source state) 
-  initFunc' (source state) >>= (\e -> environment state $= Just e)
+  newEnv <- initFunc' (source state)
+  environment state $= Just newEnv
+  lastEnvironment state $= Just env
 
 -- |Save last rendered screen texture to PNG file
 actionScreenshot state = do

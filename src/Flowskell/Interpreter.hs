@@ -1,4 +1,8 @@
 module Flowskell.Interpreter (initSchemeEnv, evalFrame) where
+import Data.Maybe (isJust)
+
+import Graphics.Rendering.OpenGL hiding (Bool, Float) -- get, $=
+
 import Control.Monad
 import Control.Monad.Error
 
@@ -13,6 +17,7 @@ import Flowskell.Lib.Random (randomIOPrimitives)
 import Flowskell.Lib.Time (timeIOPrimitives)
 import Flowskell.Lib.Color (colorIOPrimitives)
 import Flowskell.Lib.Math (mathIOPrimitives)
+import Flowskell.State
 
 import Paths_Flowskell
 
@@ -39,7 +44,8 @@ initSchemeEnv extraPrimitives filename = do
         [fskLib, filename]
   return env
 
-evalFrame env =
+evalFrame state env =
   tryEval env (List [Atom "every-frame-entry-point"]) $ \ error -> do
     reportError "<source>" error
-    evalString env "(define *has-error* #t)"
+    maybeLastEnv <- get $ lastEnvironment state
+    when (isJust maybeLastEnv) $ environment state $= maybeLastEnv
