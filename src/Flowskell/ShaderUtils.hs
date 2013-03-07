@@ -29,8 +29,8 @@ readAndCompileShader filePath = do
    reportErrors
    ok <- get (compileStatus shader)
    infoLog <- get (shaderInfoLog shader)
-   mapM_ putStrLn ["Notice: Loaded shader '" ++ filePath ++ "': " ++ infoLog]
    unless ok $ do
+      mapM_ putStrLn ["Notice: Loaded shader '" ++ filePath ++ "': " ++ infoLog]
       deleteObjectNames [shader]
       ioError (userError "shader compilation failed")
    return shader
