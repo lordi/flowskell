@@ -8,7 +8,7 @@ GL:
  * ~~make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)~~
  * Look into performance issues (allocating texture, depth buffer, render-to-texture)
  * ~~Fonts? using simple glut fonts for now~~
- * Option to enforce viewport width/height
+ * ~~Option to enforce viewport width/height~~
  * Ability to change post shader (currently blur) or use multiple post shaders (yay!)
 
 Scheme:

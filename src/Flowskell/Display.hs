@@ -91,33 +91,39 @@ initDisplay state = do
 #else
   clearColor $= Color4 0 0 0 1
 #endif
-reshapeHandler state s@(Size w h) = do
-  viewport $= (Position 0 0, s)
-  matrixMode $= Projection
-  loadIdentity
-  let fov = 60
-      near = 0.01
-      far = 100
-      aspect = (fromIntegral w) / (fromIntegral h)
-  perspective fov aspect near far
-  translate $ Vector3 0 0 (-1::GLfloat)
+reshapeHandler state size = do
+  maybeForceRes <- get $ forceResolution state
+  currentRes <- get $ currentResolution state
+
+  let s@(Size w h) = maybe size id maybeForceRes
+  when (s /= currentRes) $ do
+      currentResolution state $= s
+      viewport $= (Position 0 0, s)
+      matrixMode $= Projection
+      loadIdentity
+      let fov = 60
+          near = 0.01
+          far = 100
+          aspect = (fromIntegral w) / (fromIntegral h)
+      perspective fov aspect near far
+      translate $ Vector3 0 0 (-1::GLfloat)
 
 #ifdef RENDER_TO_TEXTURE
-  -- We need to resize the framebuffer textures, because the window size
-  -- might have changed. Unfortunately, this may take a while.
-  -- TODO: find a faster way
-  Just fbTexture <- get $ renderTexture state
-  Just fbTexture2 <- get $ lastRenderTexture state
-  Just drb <- get $ depthBuffer state
-  Just drb2 <- get $ lastRenderDepthBuffer state
+      -- We need to resize the framebuffer textures, because the window size
+      -- might have changed. Unfortunately, this may take a while.
+      -- TODO: find a faster way
+      Just fbTexture <- get $ renderTexture state
+      Just fbTexture2 <- get $ lastRenderTexture state
+      Just drb <- get $ depthBuffer state
+      Just drb2 <- get $ lastRenderDepthBuffer state
 
-  putStrLn $ "Notice: Resizing all texture buffers to " ++ (show s)
-  setTextureSize fbTexture (TextureSize2D w h)
-  setTextureSize fbTexture2 (TextureSize2D w h)
-  bindRenderbuffer Renderbuffer $= drb
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
-  bindRenderbuffer Renderbuffer $= drb2
-  renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
+      putStrLn $ "Notice: Resizing all texture buffers to " ++ (show s)
+      setTextureSize fbTexture (TextureSize2D w h)
+      setTextureSize fbTexture2 (TextureSize2D w h)
+      bindRenderbuffer Renderbuffer $= drb
+      renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
+      bindRenderbuffer Renderbuffer $= drb2
+      renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
 #endif
 
 unitQuad = do

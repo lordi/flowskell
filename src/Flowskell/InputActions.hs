@@ -32,15 +32,15 @@ actionScreenshot state = do
 -- |Reset top level rotation (still incorrect)
 actionResetView state = do
   matrixMode $= Projection
-  -- This is redundant and also incorrect.
-  -- TODO:
-  -- either save aspect or (width, height) or
-  -- original transform matrix in state
+  s@(Size w h) <- get $ currentResolution state
+  -- TODO: This is redundant to reshapeHandler in Flowskell.Display
+  viewport $= (Position 0 0, s)
+  matrixMode $= Projection
   loadIdentity
   let fov = 60
       near = 0.01
       far = 100
-      aspect = 1
+      aspect = (fromIntegral w) / (fromIntegral h)
   perspective fov aspect near far
   translate $ Vector3 0 0 (-1::GLfloat)
 

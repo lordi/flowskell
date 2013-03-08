@@ -20,6 +20,8 @@ import Flowskell.InputLine (InputLine, newInputLine)
 data State = State {
     rotation :: IORef (Vector3 GLfloat),
     environment :: IORef (Maybe Env),
+    currentResolution :: IORef Size,
+    forceResolution :: IORef (Maybe Size),
     lastEnvironment :: IORef (Maybe Env),
     initFunc :: IORef (Maybe (String -> IO Env)),
     blurFactor :: IORef GLfloat,
@@ -53,6 +55,8 @@ makeState source' = do
     lastEnvironment' <- newIORef Nothing
     rotation' <- newIORef (Vector3 0 0 (0 :: GLfloat))
     blurFactor' <- newIORef 0
+    currentResolution' <- newIORef (Size 0 0)
+    forceResolution' <- newIORef $ Nothing
     renderTexture' <- newIORef Nothing
     lastRenderTexture' <- newIORef Nothing
     renderFramebuffer' <- newIORef Nothing
@@ -76,6 +80,8 @@ makeState source' = do
         environment = environment',
         lastEnvironment = lastEnvironment',
         rotation = rotation',
+        forceResolution = forceResolution',
+        currentResolution = currentResolution',
         blurFactor = blurFactor',
         renderTexture = renderTexture',
         lastRenderTexture = lastRenderTexture',
