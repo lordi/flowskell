@@ -5,6 +5,8 @@
 (define z-axis (vector 0 0 1))
 (define up z-axis)
 (define down (vmul -1 up))
+(define right x-axis)
+(define left (vmul -1 right))
 (define origin (vector 0 0 0))
 (define % modulo)
 (define half 0.5)
