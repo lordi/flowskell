@@ -19,20 +19,23 @@ Scheme:
  * scheme compilation to Haskell AST instead of evaluation
  * use fluxus-like (every-frame ...) instead of current (define (every-frame) ...)
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
+ * maybe add an option to modify lisp tree randomly and use genetic algorithm to weight results (fitness=variance of the output or so)
 
 Viewer:
 
  * ~~be able to rotate top level with mouse~~ and cursor keys
+ * mouse wheel should be zoom
  * optional code, ~~fps display~~
  * REPL
      * Bugfix: Do not write to REPL when it is hidden
      * Bugfix: Fix encoding in REPL
      * Funky cursor in REPL instead of pipe
- * Code reloading
+ * Code (re)loading
      * ~~live code reloading, and fix F5 code reloading first~~
      * ~~Bugfix: Code reloading: do not crash when source does not exist anymore~~
      * Remember path to all shader sources, and also do a reload of these
-     * ~~+ more robust error handling (do not exit on Scheme/GLSL error, or better yet: rewind to old environment)~~
+     * ~~+ more robust error handling (do not exit on Scheme error, or better yet: rewind to old environment)~~
+     * Do not exit on GLSL error
  * Keys
      * ~~F1: show help~~
      * ~~F2: toggle REPL~~
@@ -42,6 +45,7 @@ Viewer:
      * ~~F6: reset view matrix~~
      * ~~F7: screenshot~~
      * F11: fullscreen
+     * ?: Skip through presets/examples
 
 Input:
  * Audio
@@ -54,4 +58,5 @@ Input:
 Testing:
  * Write tests for Scheme functions
  * Write functionality that verifies that no example contains errors
+ * Write a stress test
 
