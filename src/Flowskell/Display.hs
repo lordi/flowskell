@@ -176,6 +176,7 @@ displayHandler state = do
   glPushMatrix -- Save original matrix
   loadIdentity
 
+  oldPrg <- get currentProgram
   currentProgram $= Just prg
   let setUniform var val = do
       location <- get (uniformLocation prg var)
@@ -267,4 +268,5 @@ displayHandler state = do
   glPopMatrix
 #endif
 
+  currentProgram $= oldPrg
   swapBuffers
