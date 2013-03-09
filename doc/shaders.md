@@ -19,3 +19,10 @@ translate
 Translate texture by specifiying `x` and `y` in texture coordinates.
 
 [![translate](shaders/translate.png)](../shaders/translate.scm)&nbsp;
+
+blinn
+-----
+
+Blinn-Phong shader
+
+[![blinn](shaders/blinn.png)](../shaders/blinn.scm)&nbsp;
