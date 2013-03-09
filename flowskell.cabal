@@ -50,3 +50,27 @@ Executable flowskell
 
   if flag(Debug)
     Cpp-Options: -DDEBUG
+
+Executable flowskell-shot
+  Main-is: Shot.hs
+  Hs-Source-Dirs: src
+  Extensions: CPP
+  Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
+  Build-Depends: colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL, directory
+  Build-Depends: husk-scheme >= 3.7
+  Ghc-Options: -O2 -threaded
+
+  if flag(JACK)
+    Ghc-Options: -O2 -threaded +RTS -N2 -RTS
+    Cpp-Options: -DUSE_JACK
+    Build-Depends: jack >= 0.7, transformers, explicit-exception, unix
+
+  if flag(Textures)
+    Build-Depends: JuicyPixels, vector
+    Cpp-Options: -DUSE_TEXTURES
+
+  if flag(Shaders)
+    Cpp-Options: -DRENDER_TO_TEXTURE
+
+  if flag(Debug)
+    Cpp-Options: -DDEBUG

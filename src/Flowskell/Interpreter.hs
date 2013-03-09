@@ -1,4 +1,4 @@
-module Flowskell.Interpreter (initSchemeEnv, evalFrame) where
+module Flowskell.Interpreter (initSchemeEnv, initPrimitives, evalFrame) where
 import Data.Maybe (isJust)
 
 import Graphics.Rendering.OpenGL hiding (Bool, Float) -- get, $=
@@ -18,6 +18,16 @@ import Flowskell.Lib.Time (timeIOPrimitives)
 import Flowskell.Lib.Color (colorIOPrimitives)
 import Flowskell.Lib.Math (mathIOPrimitives)
 import Flowskell.State
+
+#ifdef USE_JACK
+import Flowskell.Lib.Jack (initJack)
+#endif
+#ifdef USE_TEXTURES
+import Flowskell.Lib.Textures (initTextures)
+#endif
+#ifdef RENDER_TO_TEXTURE
+import Flowskell.Lib.Shaders (initShaders)
+#endif
 
 import Paths_Flowskell
 
@@ -49,3 +59,25 @@ evalFrame state env =
     reportError "<source>" error
     maybeLastEnv <- get $ lastEnvironment state
     when (isJust maybeLastEnv) $ environment state $= maybeLastEnv
+
+initPrimitives state = do
+#ifdef RENDER_TO_TEXTURE
+  shaderIOPrimitives <- initShaders state
+#else
+  shaderIOPrimitives <- return []
+#endif
+
+#ifdef USE_TEXTURES
+  texturesIOPrimitives <- initTextures state
+#else
+  texturesIOPrimitives <- return []
+#endif
+
+#ifdef USE_JACK
+  jackIOPrimitives <- initJack
+#else
+  jackIOPrimitives <- return []
+#endif
+
+  return $ shaderIOPrimitives ++ texturesIOPrimitives ++ jackIOPrimitives
+

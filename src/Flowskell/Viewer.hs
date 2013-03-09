@@ -1,25 +1,11 @@
 module Flowskell.Viewer where
 import Control.Monad (when)
-import Graphics.Rendering.OpenGL hiding (Bool, Float)
-import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import System.Directory (getModificationTime, doesFileExist)
 
-#ifdef USE_JACK
-import Flowskell.Lib.Jack (initJack)
-#endif
-#ifdef USE_TEXTURES
-import Flowskell.Lib.Textures (initTextures)
-#endif
-#ifdef RENDER_TO_TEXTURE
-import Flowskell.Lib.Shaders (initShaders)
-#endif
-
-import Flowskell.TextureUtils
-import Flowskell.ShaderUtils
 import Flowskell.State
-import Flowskell.Interpreter (initSchemeEnv)
+import Flowskell.Interpreter (initSchemeEnv, initPrimitives)
 import Flowskell.InputActions (
     actionReloadSource, motionHandler, mouseHandler,
     keyboardMouseHandler)
@@ -30,27 +16,8 @@ viewer = do
   (_, [filename]) <- getArgsAndInitialize
   state <- makeState filename
   initDisplay state
-
-#ifdef RENDER_TO_TEXTURE
-  shaderIOPrimitives <- initShaders state
-#else
-  shaderIOPrimitives <- return []
-#endif
-
-#ifdef USE_TEXTURES
-  texturesIOPrimitives <- initTextures state
-#else
-  texturesIOPrimitives <- return []
-#endif
-
-#ifdef USE_JACK
-  jackIOPrimitives <- initJack
-#else
-  jackIOPrimitives <- return []
-#endif
-
-  let extraPrimitives = jackIOPrimitives ++ texturesIOPrimitives ++ shaderIOPrimitives
-      initFunc' = initSchemeEnv extraPrimitives
+  extraPrimitives <- initPrimitives state
+  let initFunc' = initSchemeEnv extraPrimitives
   initFunc state $= Just initFunc'
   env <- initFunc' filename
   environment state $= Just env
