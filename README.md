@@ -36,4 +36,4 @@ While Flowskell is running, the following keyboard shortcuts are available:
 Documentation
 -------------
 
-A rudimentary [command reference](https://github.com/lordi/flowskell/blob/master/doc/commands.md) exists, as well as some [examples](https://github.com/lordi/flowskell/tree/master/examples).
+A rudimentary [command reference](https://github.com/lordi/flowskell/blob/master/doc/commands.md) exists, as well as some [examples](https://github.com/lordi/flowskell/tree/master/doc/examples.md).
