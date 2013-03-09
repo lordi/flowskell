@@ -8,7 +8,7 @@ import Flowskell.Interpreter (initSchemeEnv, initPrimitives)
 import Flowskell.Display (initDisplay, reshapeHandler, displayHandler)
 
 shot = do
-  let resolution = Size 512 512
+  let resolution = Size 256 256
       numberOfFrames = 15
 
   (_, [filename, pngname]) <- getArgsAndInitialize
