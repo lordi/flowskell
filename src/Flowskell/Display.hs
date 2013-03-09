@@ -109,6 +109,7 @@ reshapeHandler state size = do
       translate $ Vector3 0 0 (-1::GLfloat)
 
 #ifdef RENDER_TO_TEXTURE
+      oldTexture <- get $ textureBinding Texture2D
       -- We need to resize the framebuffer textures, because the window size
       -- might have changed. Unfortunately, this may take a while.
       -- TODO: find a faster way
@@ -124,6 +125,7 @@ reshapeHandler state size = do
       renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
       bindRenderbuffer Renderbuffer $= drb2
       renderbufferStorage Renderbuffer DepthComponent' (RenderbufferSize w h)
+      textureBinding Texture2D $= oldTexture
 #endif
 
 unitQuad = do
@@ -164,8 +166,6 @@ displayHandler state = do
 #endif
   clear [ColorBuffer, DepthBuffer]
 
-  textureBinding Texture2D $= Nothing
-
   matrixMode $= Modelview 0
   loadIdentity
   translate $ Vector3 0 0 (-1::GLfloat)
@@ -190,7 +190,9 @@ displayHandler state = do
       uniform location $= val
   setUniform "amt" (Index1 blurF)
 
+  oldTexture <- get $ textureBinding Texture2D
   textureBinding Texture2D $= Just fbTexture2
+
   preservingMatrix $ do
     scale (-1) ((1) ::GLfloat) 1
     unitQuad
@@ -281,4 +283,5 @@ displayHandler state = do
 #endif
 
   currentProgram $= oldPrg
+  textureBinding Texture2D $= oldTexture
   swapBuffers
