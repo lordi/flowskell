@@ -130,10 +130,10 @@ unitQuad = do
   let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
       vertex3f = vertex :: Vertex3 GLfloat -> IO ()
   renderPrimitive Quads $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1) (-1)   0 )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1)   1    0 )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1    1    0 )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1  (-1)   0 )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3 (-1) (-1)   0 )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3 (-1)   1    0 )
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3   1    1    0 )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3   1  (-1)   0 )
 
 unitFrame = do
   let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
@@ -191,7 +191,9 @@ displayHandler state = do
   setUniform "amt" (Index1 blurF)
 
   textureBinding Texture2D $= Just fbTexture2
-  unitQuad
+  preservingMatrix $ do
+    scale (-1) ((1) ::GLfloat) 1
+    unitQuad
 
   currentProgram $= Nothing
 
@@ -234,7 +236,9 @@ displayHandler state = do
   bindFramebuffer Framebuffer $= fbo2
   clear [ColorBuffer, DepthBuffer]
   textureBinding Texture2D $= Just fbTexture
-  unitQuad
+  preservingMatrix $ do
+    scale (-1) ((1) ::GLfloat) 1
+    unitQuad
   flush
 
 #ifdef DEBUG
@@ -258,7 +262,9 @@ displayHandler state = do
 
   clear [ ColorBuffer, DepthBuffer ]
   depthFunc $= Just Always
-  unitQuad
+  preservingMatrix $ do
+    scale (-1) ((-1) ::GLfloat) 1
+    unitQuad
 
 #ifdef DEBUG
   -- Debug frame
