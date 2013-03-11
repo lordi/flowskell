@@ -61,9 +61,9 @@ right term@Terminal {cursorPos = (y, x)} = term { cursorPos = (y, min (x + 1) 80
 safeCursor term@Terminal {cursorPos = (y, x) } =
     term { cursorPos = (min 25 (max 1 y), min 80 (max 1 x)) }
 
+-- TODO: maybe rewrite this as parsec?
 handleANSI t | trace ("ANSI " ++ show (ansiCommand t)) False = undefined
 handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
-    | c == "K"    = term
     | c == "A"    = up term
     | c == "B"    = down term
     | c == "C"    = right term
@@ -80,7 +80,7 @@ handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
     -- Erases the screen with the background color and moves the cursor to home.
     | c == "2J"    = term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..25]] }
 
-    | c == "K"    = term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
+    | c == "K"    = term { screen = s // [((y,x_), '_')|x_<-[1..80]] }
     | c == ""   = term
     
     -- Enable scrolling (for whole sceen)
@@ -146,7 +146,7 @@ handleChar c t = t
 wrap d s = d ++ s ++ d
 
 printTerm term = do
-    putStr "\ESC[2J"
+--    putStr "\ESC[2J"
     print $ (cursorPos term, ansiCommand term)
 --    when ( ((ansiCommand term) /= "") && last (ansiCommand term) == 'H') $ print $ "=========>" ++ (ansiCommand term)
     putStrLn $ "," ++ (replicate 80 '_') ++ ","
@@ -187,8 +187,12 @@ main = do
     (termMaster, termSlave) <- openPseudoTerminal
 
     hTermSlave <- fdToHandle termSlave
+    hTermMaster <- fdToHandle termMaster
     hInRead <- fdToHandle pInRead
     hInWrite <- fdToHandle pInWrite
+
+    hSetBuffering hTermMaster NoBuffering
+    hSetBuffering hTermSlave NoBuffering
 
     hSetBuffering hInRead NoBuffering
     hSetBuffering hInWrite NoBuffering
@@ -202,14 +206,15 @@ main = do
             ("TERM", "vt100"),
             ("COLUMS", "79"),
             ("ROWS", "10")]
-    process <- runProcess "top" [] Nothing (Just environment)
+    process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
+    -- process <- runProcess "script" ["-c", "vttest 24x80.80", "-f", "/dev/null"] Nothing (Just environment)
     -- process <- runProcess "vttest" ["24x80.80"] Nothing (Just environment)
     -- process <- runProcess "vi" [] Nothing (Just environment)
-            (Just hInRead) (Just hOutWrite) Nothing
+            (Just hInRead) (Just hTermMaster) Nothing
     -- ttest"
     -- hSetBuffering _in NoBuffering
 
 
     forkIO $ redirect stdin hInWrite
     print $ parse line "" "25;8H"
-    runStateT (runTerminal hInWrite hOutRead) (initTerm (25, 80))
+    runStateT (runTerminal hInWrite hTermSlave) (initTerm (25, 80))
