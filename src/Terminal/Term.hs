@@ -14,6 +14,11 @@ import Control.Applicative hiding (many)
 import Text.Parsec
 import Text.Parsec.String
 
+{-
+ - Todo:
+ - local echo
+ -}
+
 line :: Parser [Int]
 line = number `sepBy` (char ';' *> spaces)
 
@@ -165,7 +170,9 @@ runTerminal in_ out = do
             liftIO $ putStrLn "writing sth"
             liftIO $ hPutStr in_ (inBuffer s)
             modify $ \t -> t { inBuffer = "" }
-        liftIO $ printTerm s
+        isReady <- liftIO $ hReady out
+        when (not isReady) $ do
+            liftIO $ printTerm s
 
 redirect :: Handle -> Handle -> IO ()
 redirect from to =
@@ -176,29 +183,20 @@ redirect from to =
         hFlush to
 
 main = do
-    hSetBuffering stdin NoBuffering
-    hSetBuffering stdout NoBuffering
-    -- (_in, _out, _err, proccess) <- runInteractiveCommand "ls -al --color"
-    --(_in, _out, _err, proccess) <- runInteractiveCommand "vi"
     (pOutRead, pOutWrite) <- createPipe
     (pInRead, pInWrite) <- createPipe
-    _err <- createPipe
+    (pErrRead, pErrWrite) <- createPipe
 
-    (termMaster, termSlave) <- openPseudoTerminal
-
-    hTermSlave <- fdToHandle termSlave
-    hTermMaster <- fdToHandle termMaster
     hInRead <- fdToHandle pInRead
     hInWrite <- fdToHandle pInWrite
-
-    hSetBuffering hTermMaster NoBuffering
-    hSetBuffering hTermSlave NoBuffering
-
-    hSetBuffering hInRead NoBuffering
-    hSetBuffering hInWrite NoBuffering
-
     hOutRead <- fdToHandle pOutRead
     hOutWrite <- fdToHandle pOutWrite
+
+    hSetBuffering stdin NoBuffering
+    hSetBuffering stdout NoBuffering
+    hSetBuffering stderr NoBuffering
+    hSetBuffering hInRead NoBuffering
+    hSetBuffering hInWrite NoBuffering
     hSetBuffering hOutRead NoBuffering
     hSetBuffering hOutWrite NoBuffering
 
@@ -207,14 +205,6 @@ main = do
             ("COLUMS", "79"),
             ("ROWS", "10")]
     process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
-    -- process <- runProcess "script" ["-c", "vttest 24x80.80", "-f", "/dev/null"] Nothing (Just environment)
-    -- process <- runProcess "vttest" ["24x80.80"] Nothing (Just environment)
-    -- process <- runProcess "vi" [] Nothing (Just environment)
-            (Just hInRead) (Just hTermMaster) Nothing
-    -- ttest"
-    -- hSetBuffering _in NoBuffering
-
-
+            (Just hInRead) (Just hOutWrite) Nothing
     forkIO $ redirect stdin hInWrite
-    print $ parse line "" "25;8H"
-    runStateT (runTerminal hInWrite hTermSlave) (initTerm (25, 80))
+    runStateT (runTerminal hInWrite hOutRead) (initTerm (24, 80))
