@@ -19,21 +19,10 @@ Make sure that the cabal binary path (usually `~/.cabal/bin/`) is in your `$PATH
 
     flowskell examples/donuts.scm
 
-Interaction
------------
-
-While Flowskell is running, the following keyboard shortcuts are available:
-
- * F1: Toggle help
- * F2: Toggle Scheme REPL
- * F3: Toggle FPS display
- * F4: Toggle source display (TBD)
- * F5: Reload/restart current source
- * F6: Reset view (TBD)
- * F7: Save a screenshot
-
-
 Documentation
 -------------
 
-A rudimentary [command reference](https://github.com/lordi/flowskell/blob/master/doc/commands.md) exists, as well as some [examples](https://github.com/lordi/flowskell/tree/master/examples).
+ * [Key bindings](https://github.com/lordi/flowskell/blob/master/doc/keys.md)
+ * [Incomplete command reference](https://github.com/lordi/flowskell/blob/master/doc/commands.md)
+ * [Examples](https://github.com/lordi/flowskell/tree/master/doc/examples.md)
+ * [Bundled shaders](https://github.com/lordi/flowskell/tree/master/doc/shaders.md)

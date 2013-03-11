@@ -8,8 +8,20 @@ GL:
  * ~~make-grid command or so to show the axis (RGB=XYZ) (can be called at top level or after a specific transformation)~~
  * Look into performance issues (allocating texture, depth buffer, render-to-texture)
  * ~~Fonts? using simple glut fonts for now~~
- * Option to enforce viewport width/height
+ * ~~Option to enforce viewport width/height~~
  * Ability to change post shader (currently blur) or use multiple post shaders (yay!)
+    * swirl shader: http://www.geeks3d.com/20110428/shader-library-swirl-post-processing-filter-in-glsl/
+ * Ability to move light source
+ * Ability to add texture to sphere and make earth.scm example
+    * Probably like this:
+       glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+       glNewList(list[0], GL_COMPILE);
+       sphere = gluNewQuadric();
+       gluQuadricDrawStyle( sphere, GLU_FILL);
+       gluQuadricNormals( sphere, GLU_SMOOTH);
+       gluQuadricOrientation( sphere, GLU_OUTSIDE);
+       gluQuadricTexture( sphere, GL_TRUE);
+
 
 Scheme:
 
@@ -20,6 +32,7 @@ Scheme:
  * use fluxus-like (every-frame ...) instead of current (define (every-frame) ...)
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
  * maybe add an option to modify lisp tree randomly and use genetic algorithm to weight results (fitness=variance of the output or so)
+ * Add (with-color), (with-texture), (with-shader), (preserve-matrix), as (push) ... (pop) is not very Lisp like
 
 Viewer:
 

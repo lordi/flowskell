@@ -1,3 +1,4 @@
+(shader (load-shader "blinn"))
 ; donuts
 (define (tori n)
     (color yellow)

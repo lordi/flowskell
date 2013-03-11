@@ -9,8 +9,8 @@
 (define *translate* (load-shader "translate"))
 (define *edge* (load-shader "edge"))
 
-;; Load textures
-(define *smiley* (load-texture "examples/img/smiley.png"))
+;; Load texture
+(texture (load-texture "examples/img/smiley.png"))
 
 ;; Helper functions
 (define (setup-view)
@@ -21,17 +21,9 @@
 
 ;; Construct the scene
 (define (every-frame)
-    (texture)
-    (color white)
-    (push)
-        (scale (+ 1.2 (* 0.25 (sin (secs)))))
-        (draw-plane)
-    (pop)
-    (texture *smiley*)
-
     (push)
         (shader *tint*)
-        (set-uniform "alpha" (max 0.2 (unify (cos (secs)))))
+        (set-uniform "alpha" (min 0.6 (max 0.2 (unify (cos (secs))))))
         (set-uniform "tintColor" (hsv (/ (msecs) 10.0)))
         (translate (vector 0.5 0.5 0.5))
         (setup-view)
@@ -40,7 +32,6 @@
 
     (push)
         (shader *edge*)
-        (texture *smiley*)
         (set-uniform "x" (% (secs) 1))
         (set-uniform "y" (sin (secs)))
         (translate (vector -0.5 0.5 0.5))
@@ -57,7 +48,6 @@
         (draw-cube)
     (pop)
 
-    (texture 0)
     (push)
         (shader *plasma*)
         (set-uniform "time" (* 10.0 (secs)))

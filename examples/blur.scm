@@ -8,5 +8,5 @@
   (draw-cube)
   (color (hsv (+ 145 (* 20 (secs)))))
   (translate up)
-  (scale (sin (secs)) 0.1 1.0)
+  (scale (* 0.9 (sin (secs))) 0.1 1.0)
   (draw-cube))

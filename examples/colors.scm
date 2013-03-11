@@ -1,9 +1,11 @@
+(shader (load-shader "blinn"))
+
 (define dim 8)
 (define col
   (lambda (n r)
     (translate x-axis)
     (color (hsv (* (+ (/ (sin (+ (secs) (* n r))) 2) 0.5) 360)))
-    (push) (scale 0.3) (draw-cube) (pop)
+    (push) (scale 0.35) (draw-cube) (pop)
     (if (> n 1) (col (- n 1) r))
   )
 )
@@ -17,10 +19,9 @@
 (define every-frame
   (lambda ()
     (translate (vector 0 0.1 0))
-    (rotate -30 x-axis)
+    (rotate 120 x-axis)
     (rotate (/ (msecs) 60) z-axis)
     (scale 0.5)
-    (draw-grid)
-    (scale 0.25)
+    (scale 0.4)
     (translate (vector (- (/ dim -2) 0.5) (- (/ dim -2) 0.5) 0))
     (row dim)))
