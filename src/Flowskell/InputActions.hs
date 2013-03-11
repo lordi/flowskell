@@ -60,29 +60,41 @@ actionEvalInputLine state = do
   replInputLine state $= IL.newInputLine
 
 -- Input line bindings
-keyboardAct state (Char '\b') Down = actionModifyInputLine IL.backspace state
-keyboardAct state (Char '\DEL') Down = actionModifyInputLine IL.del state
-keyboardAct state (Char '\r') Down = actionEvalInputLine state
-keyboardAct state (Char c) Down = actionModifyInputLine (IL.input c) state
-keyboardAct state (SpecialKey KeyLeft) Down = actionModifyInputLine IL.left state
-keyboardAct state (SpecialKey KeyRight) Down = actionModifyInputLine IL.right state
-keyboardAct state (SpecialKey KeyHome) Down = actionModifyInputLine IL.pos1 state
-keyboardAct state (SpecialKey KeyEnd) Down = actionModifyInputLine IL.end state
+keyboardAct (Char '\b') = actionModifyInputLine IL.backspace
+keyboardAct (Char '\DEL') = actionModifyInputLine IL.del
+keyboardAct (Char '\r') = actionEvalInputLine
+keyboardAct (Char c) = actionModifyInputLine (IL.input c)
+keyboardAct (SpecialKey KeyLeft) = actionModifyInputLine IL.left
+keyboardAct (SpecialKey KeyRight) = actionModifyInputLine IL.right
+keyboardAct (SpecialKey KeyHome) = actionModifyInputLine IL.pos1
+keyboardAct (SpecialKey KeyEnd) = actionModifyInputLine IL.end
 
 -- Function key bindings
-keyboardAct state (SpecialKey KeyF1) Down = actionToggle showHelp state
-keyboardAct state (SpecialKey KeyF2) Down = actionToggle showREPL state
-keyboardAct state (SpecialKey KeyF3) Down = actionToggle showFramesPerSecond state
-keyboardAct state (SpecialKey KeyF5) Down = actionReloadSource state
-keyboardAct state (SpecialKey KeyF6) Down = actionResetView state
-keyboardAct state (SpecialKey KeyF7) Down = actionScreenshot state
-keyboardAct _ _ _ = return ()
+keyboardAct (SpecialKey KeyF1) = actionToggle showHelp
+keyboardAct (SpecialKey KeyF2) = actionToggle showREPL
+keyboardAct (SpecialKey KeyF3) = actionToggle showFramesPerSecond
+keyboardAct (SpecialKey KeyF5) = actionReloadSource
+keyboardAct (SpecialKey KeyF6) = actionResetView
+keyboardAct (SpecialKey KeyF7) = actionScreenshot
+keyboardAct _ = \_ -> return ()
 
-keyboardMouseHandler state key st modifiers position = do
+keyboardMouseHandler state (MouseButton WheelDown) Down _ _ = do
+  let s = 0.9 :: GLfloat
+  matrixMode $= Projection
+  scale s s s
+
+keyboardMouseHandler state (MouseButton WheelUp) Down _ _ = do
+  let s = 1.1 :: GLfloat
+  matrixMode $= Projection
+  scale s s s
+
+keyboardMouseHandler state (MouseButton _) Down mod position =
   lastPosition state $= (Position (-1) (-1))
-  keyboardAct state key st
 
-mouseHandler state keystate mod pos@(Position x y) = do
+keyboardMouseHandler state key st mod position =
+  when (st == Down) $ keyboardAct key state
+
+mouseHandler state keystate mod pos@(Position x y) =
   lastPosition state $= (Position (-1) (-1))
 
 motionHandler :: State -> MotionCallback
