@@ -17,6 +17,9 @@ import Text.Parsec.String
 {-
  - Todo:
  - local echo
+ - when at bottom, move screen up and add empty line
+ - 1[5];24r
+ - ANSI as parsec parser and as own file (VT100.hs?)
  -}
 
 line :: Parser [Int]
@@ -38,7 +41,9 @@ data Terminal = Terminal {
     screen :: UArray (Int, Int) Char,
     state :: TerminalState,
     ansiCommand :: String,
-    inBuffer :: String
+    inBuffer :: String,
+    rows :: Int,
+    cols :: Int
 }
 
 data TerminalState =
@@ -52,21 +57,27 @@ initTerm s@(rows, cols) = Terminal {
     state = WaitingForInput,
     cursorPos = (1, 1),
     ansiCommand = "",
+    rows = rows,
+    cols = cols,
     inBuffer = "",
     screen = array
         ((1, 1), s)
         [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]]
 }
 
-up term@Terminal {cursorPos = (y, x)} = term { cursorPos = (max (y - 1) 1, x) }
-down term@Terminal {cursorPos = (y, x)} = term { cursorPos = (min (y + 1) 25, x) }
-left term@Terminal {cursorPos = (y, x)} = term { cursorPos = (y, max (x - 1) 1) }
-right term@Terminal {cursorPos = (y, x)} = term { cursorPos = (y, min (x + 1) 80) }
+up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }
+down t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y + 1, x) }
+left t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y, x - 1) }
+right t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y, x + 1) }
 
-safeCursor term@Terminal {cursorPos = (y, x) } =
-    term { cursorPos = (min 25 (max 1 y), min 80 (max 1 x)) }
 
--- TODO: maybe rewrite this as parsec?
+-- Wrap line
+safeCursor t@Terminal {cursorPos = (y, 81) } =
+    safeCursor $ t { cursorPos = (y + 1, 1) }
+
+safeCursor term@Terminal {cursorPos = (y, x), cols = c, rows = r } =
+    term { cursorPos = (min r (max 1 y), min c (max 1 x)) }
+
 handleANSI t | trace ("ANSI " ++ show (ansiCommand t)) False = undefined
 handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
     | c == "A"    = up term
@@ -76,18 +87,18 @@ handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
     | c == "H"    = term { cursorPos = (1, 1) }
 
     -- Erases the screen from the current line down to the bottom of the screen.
-    | c == "J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..25]] }
-    | c == "0J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..25]] }
+    | c == "J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
+    | c == "0J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
 
     -- Erases the screen from the current line up to the top of the screen.
     | c == "1J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..y]] }
 
     -- Erases the screen with the background color and moves the cursor to home.
-    | c == "2J"    = term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..25]] }
+    | c == "2J"    = term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }
 
-    | c == "K"    = term { screen = s // [((y,x_), '_')|x_<-[1..80]] }
+    | c == "K"    = term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
     | c == ""   = term
-    
+
     -- Enable scrolling (for whole sceen)
     | c == "r"   = term
 
@@ -129,34 +140,34 @@ handleChar c term@Terminal { state = ReadingANSI }
     | isNumber c || elem c ";=?" = term { ansiCommand = (ansiCommand term) ++ [c] }
     | otherwise                  = handleANSI $ term { ansiCommand = (ansiCommand term) ++ [c], state = WaitingForInput }
 
+handleChar '\a' t = t -- BELL
 
 handleChar '\r' term@Terminal { state = WaitingForInput } =
     let pos@(y, x) = cursorPos term in
     term { cursorPos = (y, 1) }
-handleChar '\b' term@Terminal { state = WaitingForInput } =
+handleChar '\b' term@Terminal { state = WaitingForInput, screen = s } =
     let pos@(y, x) = cursorPos term in
-    term { cursorPos = (y, max 1 (x - 1)) }
---           screen = (screen term) // [(pos, '_')] }
+    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
 handleChar '\n' term@Terminal { state = WaitingForInput } =
     let pos@(y, x) = cursorPos term in
-    term { cursorPos = (y + 1, 1) }
-handleChar '\a' t = t -- BELL
-handleChar c term@Terminal { state = WaitingForInput } =
+    safeCursor $ term { cursorPos = (y + 1, 1) }
+handleChar c term@Terminal { state = WaitingForInput, screen = s } =
     let pos@(y, x) = cursorPos term in
-    term { screen = (screen term) // [(pos, c)],
-           cursorPos = (y, min 80 (x + 1)) }
+    safeCursor $ term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
 
 handleChar c t = t
 
 wrap d s = d ++ s ++ d
 
 printTerm term = do
---    putStr "\ESC[2J"
+    putStr "\ESC[2J"
     print $ (cursorPos term, ansiCommand term)
 --    when ( ((ansiCommand term) /= "") && last (ansiCommand term) == 'H') $ print $ "=========>" ++ (ansiCommand term)
-    putStrLn $ "," ++ (replicate 80 '_') ++ ","
-    mapM_ (putStrLn . (wrap "|")) (chunk 80 $ elems (screen term // [(cursorPos term, '|')]))
-    putStrLn $ "`" ++ (replicate 80 '"') ++ "´"
+    putStrLn $ "," ++ (replicate (cols term) '_') ++ ","
+    mapM_
+        (putStrLn . (wrap "|"))
+        (chunk (cols term) $ elems (screen term // [(cursorPos term, '|')]))
+    putStrLn $ "`" ++ (replicate (cols term) '"') ++ "´"
     hFlush stdout
 
 runTerminal :: Handle -> Handle -> StateT Terminal IO ()
@@ -177,10 +188,7 @@ runTerminal in_ out = do
 redirect :: Handle -> Handle -> IO ()
 redirect from to =
     forever $ do
-        print "read"
         hGetChar from >>= hPutChar to
-        print "wrote"
-        hFlush to
 
 main = do
     (pOutRead, pOutWrite) <- createPipe
