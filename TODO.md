@@ -12,6 +12,16 @@ GL:
  * Ability to change post shader (currently blur) or use multiple post shaders (yay!)
     * swirl shader: http://www.geeks3d.com/20110428/shader-library-swirl-post-processing-filter-in-glsl/
  * Ability to move light source
+ * Ability to add texture to sphere and make earth.scm example
+    * Probably like this:
+       glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+       glNewList(list[0], GL_COMPILE);
+       sphere = gluNewQuadric();
+       gluQuadricDrawStyle( sphere, GLU_FILL);
+       gluQuadricNormals( sphere, GLU_SMOOTH);
+       gluQuadricOrientation( sphere, GLU_OUTSIDE);
+       gluQuadricTexture( sphere, GL_TRUE);
+
 
 Scheme:
 
