@@ -1,3 +1,4 @@
+module Parser where
 import Control.Monad
 import Control.Applicative hiding (many, (<|>))
 import Control.Monad.State
@@ -11,26 +12,24 @@ import Data.List (insert)
 import Data.Maybe (maybeToList)
 import qualified Text.Parsec.Token as PT
 
-data TerminalAction c =
-    Bell
-    | Newline
-    | TChar c
+data TerminalAction =
+    CharInput Char
     | ANSIAction [Int] Char
     | Ignored
     deriving Show
 
-play :: String -> Either ParseError ([TerminalAction Char], String)
+play :: String -> Either ParseError ([TerminalAction], String)
 play s = parse pxxx "" s
 
 pnum = read `fmap` many1 digit
 
-pxxx :: Parser ([TerminalAction Char], String)
+pxxx :: Parser ([TerminalAction], String)
 pxxx = do
     x <- many (pchar <|> pansi)
     i <- getInput
     return (x, i)
 
-pansi :: Parser (TerminalAction Char)
+pansi :: Parser (TerminalAction)
 pansi = try (do
     string "\ESC["
     optionMaybe (char '?')
@@ -42,10 +41,8 @@ pansi = try (do
     <|> try (string "\ESC=" >> return Ignored)
     <|> try (string "\ESC(B" >> return Ignored)
 
-pchar :: Parser (TerminalAction Char)
-pchar = (newline >> return Newline)
-    <|> (char '\a' >> return Bell)
-    <|> (satisfy (/= '\ESC') >>= return . TChar)
+pchar :: Parser (TerminalAction)
+pchar = (satisfy (/= '\ESC') >>= return . CharInput)
 
 stdinReader =
     forever $ do

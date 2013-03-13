@@ -1,4 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
+module Terminal where
 import System.Process
 import Data.Array.Unboxed
 import Data.Char
@@ -14,47 +15,20 @@ import Control.Applicative hiding (many)
 import Text.Parsec
 import Text.Parsec.String
 
-{-
- - Todo:
- - local echo
- - when at bottom, move screen up and add empty line
- - 1[5];24r
- - ANSI as parsec parser and as own file (VT100.hs?)
- -}
-
-line :: Parser [Int]
-line = number `sepBy` (char ';' *> spaces)
-
-number = read <$> many digit
-
--- | Standard build function.
-build :: (forall b. (a -> b -> b) -> b -> b) -> [a]
-build g = g (:) []
-
-chunk :: Int -> [s] -> [[s]]
-chunk i ls = map (take i) (build (splitter ls)) where
-  splitter [] _ n = n
-  splitter l c n  = l `c` splitter (drop i l) c n
+import Parser
 
 data Terminal = Terminal {
     cursorPos :: (Int, Int),
     screen :: UArray (Int, Int) Char,
-    state :: TerminalState,
     ansiCommand :: String,
     inBuffer :: String,
     rows :: Int,
     cols :: Int
 }
 
-data TerminalState =
-    WaitingForInput |
-    ANSIEscape |
-    ReadingANSI
-
 emptyChar = ' '
 
 initTerm s@(rows, cols) = Terminal {
-    state = WaitingForInput,
     cursorPos = (1, 1),
     ansiCommand = "",
     rows = rows,
@@ -70,7 +44,6 @@ down t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y + 1, x) }
 left t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y, x - 1) }
 right t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y, x + 1) }
 
-
 -- Wrap line
 safeCursor t@Terminal {cursorPos = (y, 81) } =
     safeCursor $ t { cursorPos = (y + 1, 1) }
@@ -78,6 +51,7 @@ safeCursor t@Terminal {cursorPos = (y, 81) } =
 safeCursor term@Terminal {cursorPos = (y, x), cols = c, rows = r } =
     term { cursorPos = (min r (max 1 y), min c (max 1 x)) }
 
+{-
 handleANSI t | trace ("ANSI " ++ show (ansiCommand t)) False = undefined
 handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
     | c == "A"    = up term
@@ -156,63 +130,26 @@ handleChar c term@Terminal { state = WaitingForInput, screen = s } =
     safeCursor $ term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
 
 handleChar c t = t
+-}
 
-wrap d s = d ++ s ++ d
 
-printTerm term = do
-    putStr "\ESC[2J"
-    print $ (cursorPos term, ansiCommand term)
---    when ( ((ansiCommand term) /= "") && last (ansiCommand term) == 'H') $ print $ "=========>" ++ (ansiCommand term)
-    putStrLn $ "," ++ (replicate (cols term) '_') ++ ","
-    mapM_
-        (putStrLn . (wrap "|"))
-        (chunk (cols term) $ elems (screen term // [(cursorPos term, '|')]))
-    putStrLn $ "`" ++ (replicate (cols term) '"') ++ "´"
-    hFlush stdout
+handleAction :: TerminalAction -> Terminal -> Terminal
+handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
+    safeCursor t
+    where t = case act of
+            CharInput '\n' -> term { cursorPos = (y + 1, 1) }
+            CharInput '\b' -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
+            CharInput c -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
 
-runTerminal :: Handle -> Handle -> StateT Terminal IO ()
-runTerminal in_ out = do
-    forever $ do
-        c <- (liftIO $ hGetChar out)
-        liftIO $ print c -- \        liftIO $ putStrLn "----"
-        modify (handleChar c)
-        s <- get
-        when ((inBuffer s) /= "") $ do
-            liftIO $ putStrLn "writing sth"
-            liftIO $ hPutStr in_ (inBuffer s)
-            modify $ \t -> t { inBuffer = "" }
-        isReady <- liftIO $ hReady out
-        when (not isReady) $ do
-            liftIO $ printTerm s
+{-
+    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
+    
+    let pos@(y, x) = cursorPos term in
 
-redirect :: Handle -> Handle -> IO ()
-redirect from to =
-    forever $ do
-        hGetChar from >>= hPutChar to
-
-main = do
-    (pOutRead, pOutWrite) <- createPipe
-    (pInRead, pInWrite) <- createPipe
-    (pErrRead, pErrWrite) <- createPipe
-
-    hInRead <- fdToHandle pInRead
-    hInWrite <- fdToHandle pInWrite
-    hOutRead <- fdToHandle pOutRead
-    hOutWrite <- fdToHandle pOutWrite
-
-    hSetBuffering stdin NoBuffering
-    hSetBuffering stdout NoBuffering
-    hSetBuffering stderr NoBuffering
-    hSetBuffering hInRead NoBuffering
-    hSetBuffering hInWrite NoBuffering
-    hSetBuffering hOutRead NoBuffering
-    hSetBuffering hOutWrite NoBuffering
-
-    let environment = [
-            ("TERM", "vt100"),
-            ("COLUMS", "79"),
-            ("ROWS", "10")]
-    process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
-            (Just hInRead) (Just hOutWrite) Nothing
-    forkIO $ redirect stdin hInWrite
-    runStateT (runTerminal hInWrite hOutRead) (initTerm (24, 80))
+handleAction '\r' term@Terminal { state = WaitingForInput } =
+    let pos@(y, x) = cursorPos term in
+    term { cursorPos = (y, 1) }
+handleAction Backspace term@Terminal { screen = s } =
+    let pos@(y, x) = cursorPos term in
+    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
+    -}
