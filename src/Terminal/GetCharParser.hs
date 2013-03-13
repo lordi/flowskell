@@ -26,28 +26,21 @@ pnum = read `fmap` many1 digit
 
 pxxx :: Parser ([TerminalAction Char], String)
 pxxx = do
-    x <- many (pchar <|> try pansi <|> try pansi2 <|> try pansi3)
+    x <- many (pchar <|> pansi)
     i <- getInput
     return (x, i)
 
 pansi :: Parser (TerminalAction Char)
-pansi = do
+pansi = try (do
     string "\ESC["
     optionMaybe (char '?')
     param <- optionMaybe pnum
     params <- many (char ';' >> pnum)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
-
-pansi2 :: Parser (TerminalAction Char)
-pansi2 = do
-    string "\ESC="
-    return Ignored
-
-pansi3 :: Parser (TerminalAction Char)
-pansi3 = do
-    string "\ESC("
-    return Ignored
+    )
+    <|> try (string "\ESC=" >> return Ignored)
+    <|> try (string "\ESC(B" >> return Ignored)
 
 pchar :: Parser (TerminalAction Char)
 pchar = (newline >> return Newline)
