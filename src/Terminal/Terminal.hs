@@ -20,8 +20,8 @@ import Parser
 data Terminal = Terminal {
     cursorPos :: (Int, Int),
     screen :: UArray (Int, Int) Char,
-    ansiCommand :: String,
     inBuffer :: String,
+    responseBuffer :: String,
     rows :: Int,
     cols :: Int
 }
@@ -30,10 +30,10 @@ emptyChar = ' '
 
 initTerm s@(rows, cols) = Terminal {
     cursorPos = (1, 1),
-    ansiCommand = "",
     rows = rows,
     cols = cols,
     inBuffer = "",
+    responseBuffer = "",
     screen = array
         ((1, 1), s)
         [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]]
@@ -140,16 +140,26 @@ handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             CharInput '\n' -> term { cursorPos = (y + 1, 1) }
             CharInput '\b' -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
             CharInput c -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
+            ANSIAction [] 'A'   -> down term
+            ANSIAction [] 'B'   -> up term
+            ANSIAction [] 'C'   -> right term
+            ANSIAction [] 'D'   -> left term
+            ANSIAction [n] 'A'  -> (iterate down term) !! n
+            ANSIAction [n] 'B'  -> (iterate up term) !! n
+            ANSIAction [n] 'C'  -> (iterate right term) !! n
+            ANSIAction [n] 'D'  -> (iterate left term) !! n
+            ANSIAction [] 'H'   -> term { cursorPos = (1, 1) }
+            ANSIAction [y,x] 'H'-> term { cursorPos = (y, x) }
+            ANSIAction _ 'm'    -> term
 
-{-
-    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
-    
-    let pos@(y, x) = cursorPos term in
+            -- Erases the screen with the background color and moves the cursor to home.
+            ANSIAction [2] 'J'  -> term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }
 
-handleAction '\r' term@Terminal { state = WaitingForInput } =
-    let pos@(y, x) = cursorPos term in
-    term { cursorPos = (y, 1) }
-handleAction Backspace term@Terminal { screen = s } =
-    let pos@(y, x) = cursorPos term in
-    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
-    -}
+            -- Erases the screen from the current line up to the top of the screen.
+            ANSIAction [1] 'J'  -> term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..y]] }
+
+            -- Erases the screen from the current line down to the bottom of the screen.
+            ANSIAction _ 'J'    -> term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
+
+            ANSIAction _ 'K'    -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
+

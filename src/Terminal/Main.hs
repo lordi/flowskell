@@ -15,7 +15,7 @@ import Text.Parsec
 import Text.Parsec.String
 
 import Parser
-import Terminau
+import Terminal
 
 {-
  - Todo:
@@ -38,7 +38,7 @@ wrap d s = d ++ s ++ d
 
 printTerm term = do
     putStr "\ESC[2J"
-    print $ (cursorPos term, ansiCommand term)
+--    print $ (cursorPos term, ansiCommand term)
 --    when ( ((ansiCommand term) /= "") && last (ansiCommand term) == 'H') $ print $ "=========>" ++ (ansiCommand term)
     putStrLn $ "," ++ (replicate (cols term) '_') ++ ","
     mapM_
@@ -51,13 +51,24 @@ runTerminal :: Handle -> Handle -> StateT Terminal IO ()
 runTerminal in_ out = do
     forever $ do
         c <- (liftIO $ hGetChar out)
-        liftIO $ print c -- \        liftIO $ putStrLn "----"
-        modify (handleChar c)
         s <- get
+
+        Right (actions, leftover) <- return $ play $ (inBuffer s) ++ [c]
+        liftIO $ print c
+        liftIO $ print actions
+        liftIO $ print leftover
+
+        forM actions (modify . handleAction)
+
+        term <- get
+        put $ term { inBuffer = leftover }
+        
+{-        s <- get
+
         when ((inBuffer s) /= "") $ do
             liftIO $ putStrLn "writing sth"
             liftIO $ hPutStr in_ (inBuffer s)
-            modify $ \t -> t { inBuffer = "" }
+            modify $ \t -> t { inBuffer = "" } -}
         isReady <- liftIO $ hReady out
         when (not isReady) $ do
             liftIO $ printTerm s

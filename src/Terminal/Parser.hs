@@ -44,6 +44,7 @@ pansi = try (do
 pchar :: Parser (TerminalAction)
 pchar = (satisfy (/= '\ESC') >>= return . CharInput)
 
+{-
 stdinReader =
     forever $ do
         (liftIO getChar) >>= \x -> modify $ \y -> y ++ [x]
@@ -53,7 +54,8 @@ stdinReader =
             Left b -> (liftIO $ print (b)) -- >> (liftIO $ exitFailure)
         return ()
 
-main = do
+ main = do
     hSetBuffering stdin NoBuffering
     print $ play "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
     runStateT stdinReader ""
+    -}
