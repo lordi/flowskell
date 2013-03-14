@@ -143,27 +143,21 @@ handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             CharInput '\a'      -> term
 
             -- Newline
-            CharInput '\n' -> term { cursorPos = (y + 1, 1) }
-            CharInput '\r' -> term { cursorPos = (y, 1) }
-            CharInput '\b' -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
-            CharInput c -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
-            ANSIAction [] 'A'   -> up term
-            ANSIAction [] 'B'   -> down term
-            ANSIAction [] 'C'   -> right term
-            ANSIAction [] 'D'   -> left term
-            ANSIAction [n] 'A'  -> (iterate up term) !! n
-            ANSIAction [n] 'B'  -> (iterate down term) !! n
-            ANSIAction [n] 'C'  -> (iterate right term) !! n
-            ANSIAction [n] 'D'  -> (iterate left term) !! n
+            CharInput '\n'      -> term { cursorPos = (y + 1, 1) }
+            CharInput '\r'      -> term { cursorPos = (y, 1) }
+            CharInput '\b'      -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
+            CharInput c         -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
+
+            CursorUp n          -> (iterate up term) !! n
+            CursorDown n        -> (iterate down term) !! n
+            CursorForward n     -> (iterate right term) !! n
+            CursorBackward n    -> (iterate left term) !! n
 
             -- Colors, yay!
             ANSIAction _ 'm'    -> term
 
             -- Force cursor position
-            ANSIAction [y,x] 'H'-> term { cursorPos = (y, x) }
-            ANSIAction [] 'H'   -> term { cursorPos = (1, 1) }
-            ANSIAction [y,x] 'f'-> term { cursorPos = (y, x) }
-            ANSIAction [] 'f'   -> term { cursorPos = (1, 1) }
+            SetCursor col row   -> term { cursorPos = (col, row) }
 
             -- Erases the screen with the background color and moves the cursor to home.
             ANSIAction [2] 'J'  -> term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }

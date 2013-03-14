@@ -12,15 +12,34 @@ import Data.List (insert)
 import Data.Maybe (maybeToList)
 import qualified Text.Parsec.Token as PT
 
-# http://paulbourke.net/dataformats/ascii/
-
 data TerminalAction =
       CharInput Char
+    | CursorUp Int
+    | CursorDown Int
+    | CursorForward Int
+    | CursorBackward Int
+    | SetCursor Int Int
     | ANSIAction [Int] Char
     | KeypadKeysApplicationsMode
     | KeypadKeysNumericMode
     | Ignored
     deriving Show
+
+-- TODO: choose another name
+simplify :: TerminalAction -> TerminalAction
+simplify (ANSIAction [] 'A') = CursorUp 1
+simplify (ANSIAction [n] 'A') = CursorUp n
+simplify (ANSIAction [] 'B')  = CursorDown 1
+simplify (ANSIAction [n] 'B')  = CursorDown n
+simplify (ANSIAction [] 'C') = CursorForward 1
+simplify (ANSIAction [n] 'C') = CursorForward n
+simplify (ANSIAction [] 'D') = CursorBackward 1
+simplify (ANSIAction [n] 'D') = CursorBackward n
+simplify (ANSIAction [] 'H') = SetCursor 1 1
+simplify (ANSIAction [] 'f') = SetCursor 1 1
+simplify (ANSIAction [y,x] 'H') = SetCursor y x
+simplify (ANSIAction [y,x] 'f') = SetCursor y x
+simplify x = x
 
 play :: String -> Either ParseError ([TerminalAction], String)
 play s = parse pxxx "" s
@@ -31,7 +50,7 @@ pxxx :: Parser ([TerminalAction], String)
 pxxx = do
     x <- many (pchar <|> pansi)
     i <- getInput
-    return (x, i)
+    return (map simplify x, i)
 
 pansi :: Parser (TerminalAction)
 pansi = try (do
