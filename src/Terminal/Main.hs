@@ -16,6 +16,7 @@ import Text.Parsec.String
 
 import Parser
 import Terminal
+import Types
 
 {-
  - Todo:

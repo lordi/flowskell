@@ -12,18 +12,7 @@ import Data.List (insert)
 import Data.Maybe (maybeToList)
 import qualified Text.Parsec.Token as PT
 
-data TerminalAction =
-      CharInput Char
-    | CursorUp Int
-    | CursorDown Int
-    | CursorForward Int
-    | CursorBackward Int
-    | SetCursor Int Int
-    | ANSIAction [Int] Char
-    | KeypadKeysApplicationsMode
-    | KeypadKeysNumericMode
-    | Ignored
-    deriving Show
+import Types
 
 -- TODO: choose another name
 simplify :: TerminalAction -> TerminalAction

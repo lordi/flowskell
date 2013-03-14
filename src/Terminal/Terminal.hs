@@ -12,19 +12,9 @@ import GHC.IO.Handle
 import Debug.Trace
 import Control.Concurrent
 import Control.Applicative hiding (many)
-import Text.Parsec
-import Text.Parsec.String
 
 import Parser
-
-data Terminal = Terminal {
-    cursorPos :: (Int, Int),
-    screen :: UArray (Int, Int) Char,
-    inBuffer :: String,
-    responseBuffer :: String,
-    rows :: Int,
-    cols :: Int
-}
+import Types
 
 emptyChar = ' '
 
