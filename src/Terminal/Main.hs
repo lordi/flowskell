@@ -37,8 +37,9 @@ chunk i ls = map (take i) (build (splitter ls)) where
 wrap d s = d ++ s ++ d
 
 printTerm term = do
-    putStr "\ESC[2J"
---    print $ (cursorPos term, ansiCommand term)
+--    putStr "\ESC[2J"
+    print $ (cursorPos term)
+    ---, ansiCommand term)
 --    when ( ((ansiCommand term) /= "") && last (ansiCommand term) == 'H') $ print $ "=========>" ++ (ansiCommand term)
     putStrLn $ "," ++ (replicate (cols term) '_') ++ ","
     mapM_
@@ -58,7 +59,9 @@ runTerminal in_ out = do
         liftIO $ print actions
         liftIO $ print leftover
 
-        forM actions (modify . handleAction)
+        forM actions (\x -> do
+            liftIO $ putStrLn $ "executing" ++ show x
+            modify $ handleAction x)
 
         term <- get
         put $ term { inBuffer = leftover }
@@ -71,7 +74,7 @@ runTerminal in_ out = do
             modify $ \t -> t { inBuffer = "" } -}
         isReady <- liftIO $ hReady out
         when (not isReady) $ do
-            liftIO $ printTerm s
+            liftIO $ printTerm term
 
 redirect :: Handle -> Handle -> IO ()
 redirect from to =

@@ -12,9 +12,13 @@ import Data.List (insert)
 import Data.Maybe (maybeToList)
 import qualified Text.Parsec.Token as PT
 
+# http://paulbourke.net/dataformats/ascii/
+
 data TerminalAction =
-    CharInput Char
+      CharInput Char
     | ANSIAction [Int] Char
+    | KeypadKeysApplicationsMode
+    | KeypadKeysNumericMode
     | Ignored
     deriving Show
 
@@ -31,15 +35,18 @@ pxxx = do
 
 pansi :: Parser (TerminalAction)
 pansi = try (do
-    string "\ESC["
+    string "\ESC"
+    optionMaybe (char '[')
     optionMaybe (char '?')
     param <- optionMaybe pnum
     params <- many (char ';' >> pnum)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
     )
-    <|> try (string "\ESC=" >> return Ignored)
+    <|> try (string "\ESC=" >> return KeypadKeysApplicationsMode)
+    <|> try (string "\ESC>" >> return KeypadKeysNumericMode)
     <|> try (string "\ESC(B" >> return Ignored)
+    <|> try (string "\ESC#8" >> return Ignored)
 
 pchar :: Parser (TerminalAction)
 pchar = (satisfy (/= '\ESC') >>= return . CharInput)

@@ -137,20 +137,33 @@ handleAction :: TerminalAction -> Terminal -> Terminal
 handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
     safeCursor t
     where t = case act of
+            Ignored             -> term
+
+            -- Bell
+            CharInput '\a'      -> term
+
+            -- Newline
             CharInput '\n' -> term { cursorPos = (y + 1, 1) }
+            CharInput '\r' -> term { cursorPos = (y, 1) }
             CharInput '\b' -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
             CharInput c -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
-            ANSIAction [] 'A'   -> down term
-            ANSIAction [] 'B'   -> up term
+            ANSIAction [] 'A'   -> up term
+            ANSIAction [] 'B'   -> down term
             ANSIAction [] 'C'   -> right term
             ANSIAction [] 'D'   -> left term
-            ANSIAction [n] 'A'  -> (iterate down term) !! n
-            ANSIAction [n] 'B'  -> (iterate up term) !! n
+            ANSIAction [n] 'A'  -> (iterate up term) !! n
+            ANSIAction [n] 'B'  -> (iterate down term) !! n
             ANSIAction [n] 'C'  -> (iterate right term) !! n
             ANSIAction [n] 'D'  -> (iterate left term) !! n
-            ANSIAction [] 'H'   -> term { cursorPos = (1, 1) }
-            ANSIAction [y,x] 'H'-> term { cursorPos = (y, x) }
+
+            -- Colors, yay!
             ANSIAction _ 'm'    -> term
+
+            -- Force cursor position
+            ANSIAction [y,x] 'H'-> term { cursorPos = (y, x) }
+            ANSIAction [] 'H'   -> term { cursorPos = (1, 1) }
+            ANSIAction [y,x] 'f'-> term { cursorPos = (y, x) }
+            ANSIAction [] 'f'   -> term { cursorPos = (1, 1) }
 
             -- Erases the screen with the background color and moves the cursor to home.
             ANSIAction [2] 'J'  -> term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }
@@ -161,5 +174,14 @@ handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             -- Erases the screen from the current line down to the bottom of the screen.
             ANSIAction _ 'J'    -> term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
 
-            ANSIAction _ 'K'    -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
+            -- Erases the entire current line.
+            ANSIAction [2] 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
+
+            -- Erases from the current cursor position to the start of the current line.
+            ANSIAction [1] 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..x]] }
+
+            -- Erases from the current cursor position to the end of the current line. 
+            ANSIAction _ 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
+
+            _                 -> trace ("\nunsupported seq: " ++ show act) term
 
