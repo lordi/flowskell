@@ -1,5 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
-module Terminal where
+module Terminal (newTerminal, applyAction) where
 import System.Process
 import Data.Array.Unboxed
 import Data.Char
@@ -18,7 +18,7 @@ import Types
 
 emptyChar = ' '
 
-initTerm s@(rows, cols) = Terminal {
+newTerminal s@(rows, cols) = Terminal {
     cursorPos = (1, 1),
     rows = rows,
     cols = cols,
@@ -41,90 +41,8 @@ safeCursor t@Terminal {cursorPos = (y, 81) } =
 safeCursor term@Terminal {cursorPos = (y, x), cols = c, rows = r } =
     term { cursorPos = (min r (max 1 y), min c (max 1 x)) }
 
-{-
-handleANSI t | trace ("ANSI " ++ show (ansiCommand t)) False = undefined
-handleANSI term@Terminal {ansiCommand = c, cursorPos = (y, x), screen = s }
-    | c == "A"    = up term
-    | c == "B"    = down term
-    | c == "C"    = right term
-    | c == "D"    = left term
-    | c == "H"    = term { cursorPos = (1, 1) }
-
-    -- Erases the screen from the current line down to the bottom of the screen.
-    | c == "J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
-    | c == "0J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
-
-    -- Erases the screen from the current line up to the top of the screen.
-    | c == "1J"    = term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..y]] }
-
-    -- Erases the screen with the background color and moves the cursor to home.
-    | c == "2J"    = term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }
-
-    | c == "K"    = term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
-    | c == ""   = term
-
-    -- Enable scrolling (for whole sceen)
-    | c == "r"   = term
-
-    -- Device attributes
-    | last c == 'c'   = term { inBuffer = "\ESC[1;0c" }
-    | c !! 0 == '?'   = term { inBuffer = "\ESC[1;0c" }
-
-    -- Set line attributes
-    | last c == 'l'   = term
-    | last c == 'h'   = term
-
-    -- Set colors
-    | last c == 'm'   = term
-
-    | last c =='A'= case parse line "" c of
-        Left error -> term
-        Right [times] -> (iterate down term) !! times
-    | last c =='B'= case parse line "" c of
-        Left error -> term
-        Right [times] -> (iterate up term) !! times
-    | last c =='C'= case parse line "" c of
-        Left error -> term
-        Right [times] -> (iterate right term) !! times
-    | last c =='D'= case parse line "" c of
-        Left error -> term
-        Right [times] -> (iterate left term) !! times
-    | last c =='H'= case parse line "" c of
-        Left error -> term
-        Right [y_,x_] -> safeCursor $ term { cursorPos = (y_, x_) }
-    | otherwise   = trace ("UNKNOWN ANSI " ++ show (ansiCommand term)) undefined
-
-handleChar :: Char -> Terminal -> Terminal
-handleChar '\ESC' term =
-    term { state = ANSIEscape }
-handleChar '[' term@Terminal { state = ANSIEscape } =
-    term { state = ReadingANSI, ansiCommand = "" }
-
-handleChar c term@Terminal { state = ReadingANSI }
-    | isNumber c || elem c ";=?" = term { ansiCommand = (ansiCommand term) ++ [c] }
-    | otherwise                  = handleANSI $ term { ansiCommand = (ansiCommand term) ++ [c], state = WaitingForInput }
-
-handleChar '\a' t = t -- BELL
-
-handleChar '\r' term@Terminal { state = WaitingForInput } =
-    let pos@(y, x) = cursorPos term in
-    term { cursorPos = (y, 1) }
-handleChar '\b' term@Terminal { state = WaitingForInput, screen = s } =
-    let pos@(y, x) = cursorPos term in
-    safeCursor $ term { cursorPos = (y, x - 1), screen = s // [(pos, emptyChar)] }
-handleChar '\n' term@Terminal { state = WaitingForInput } =
-    let pos@(y, x) = cursorPos term in
-    safeCursor $ term { cursorPos = (y + 1, 1) }
-handleChar c term@Terminal { state = WaitingForInput, screen = s } =
-    let pos@(y, x) = cursorPos term in
-    safeCursor $ term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
-
-handleChar c t = t
--}
-
-
-handleAction :: TerminalAction -> Terminal -> Terminal
-handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
+applyAction :: TerminalAction -> Terminal -> Terminal
+applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
     safeCursor t
     where t = case act of
             Ignored             -> term
