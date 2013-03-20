@@ -24,6 +24,7 @@ initTerm s@(rows, cols) = Terminal {
     cols = cols,
     inBuffer = "",
     responseBuffer = "",
+    scrollingRegion = (1, rows),
     screen = array
         ((1, 1), s)
         [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]]
@@ -148,6 +149,9 @@ handleAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
 
             -- Force cursor position
             SetCursor col row   -> term { cursorPos = (col, row) }
+
+            SetScrollingRegion start end -> term { scrollingRegion = (start, end) }
+            ScrollUp            -> term { screen = s // [((y_,x_), 'E')|x_<-[1..80],y_<-[1..24]] }
 
             -- Erases the screen with the background color and moves the cursor to home.
             ANSIAction [2] 'J'  -> term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }

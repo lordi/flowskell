@@ -24,6 +24,8 @@ simplify (ANSIAction [] 'C') = CursorForward 1
 simplify (ANSIAction [n] 'C') = CursorForward n
 simplify (ANSIAction [] 'D') = CursorBackward 1
 simplify (ANSIAction [n] 'D') = CursorBackward n
+simplify (ANSIAction [start, end] 'r') = SetScrollingRegion start end
+
 simplify (ANSIAction [] 'H') = SetCursor 1 1
 simplify (ANSIAction [] 'f') = SetCursor 1 1
 simplify (ANSIAction [y,x] 'H') = SetCursor y x
@@ -43,14 +45,15 @@ pxxx = do
 
 pansi :: Parser (TerminalAction)
 pansi = try (do
-    string "\ESC"
-    optionMaybe (char '[')
+    string "\ESC["
     optionMaybe (char '?')
     param <- optionMaybe pnum
     params <- many (char ';' >> pnum)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
     )
+    <|> try (string "\ESCM" >> return ScrollUp)
+    <|> try (string "\ESCD" >> return ScrollDown)
     <|> try (string "\ESC=" >> return KeypadKeysApplicationsMode)
     <|> try (string "\ESC>" >> return KeypadKeysNumericMode)
     <|> try (string "\ESC(B" >> return Ignored)
