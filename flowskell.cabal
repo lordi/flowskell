@@ -33,7 +33,7 @@ Executable flowskell
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL, directory
-  Build-Depends: husk-scheme >= 3.7
+  Build-Depends: husk-scheme >= 3.8
   Ghc-Options: -O2 -threaded
 
   if flag(JACK)
@@ -57,7 +57,7 @@ Executable flowskell-shot
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: colour, time, GLUT, OpenGLRaw, GLURaw, OpenGL, directory
-  Build-Depends: husk-scheme >= 3.7
+  Build-Depends: husk-scheme >= 3.8
   Ghc-Options: -O2 -threaded
 
   if flag(JACK)
