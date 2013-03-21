@@ -1,4 +1,3 @@
-(define *mosaic* (load-texture "examples/img/mosaic.png"))
 (define (every-frame)
     (rotate -15 x-axis)
     (rotate (modulo (/ (msecs) 120) 360) z-axis)
@@ -23,9 +22,10 @@
         (translate (vmul 1 y-axis))
         (draw-plane)
     (pop)
+    (texture 0) ;; No texture
     (translate up)
     (scale 0.3)
     (rotate (/ (msecs) 10) x-axis)
-    (texture *mosaic*)
+    (color (hsv (* 20 (secs))))
     (draw-cube)
 )
