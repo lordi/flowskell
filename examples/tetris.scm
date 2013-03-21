@@ -1,18 +1,15 @@
-; Needs a least husk 3.7.1
-
 ; Return a list containing numbers from 0 to n
 (define (range n)
     (if (> n 0)
         (append (range (- n 1)) (list n))
         '(0)))
 
-; Load block textures from 0 to 15
+; Load block textures
 (define *blocks*
     (map (lambda (n)
         (load-texture (string-append "examples/img/blocks/block-" (number->string n) ".png"))
         )
     (range 6)))
-
 
 (define *curx* 0)
 (define *cury* 0)
@@ -124,6 +121,7 @@
   (push)
     (color (vmul 0.2 white))
     (translate (vector 0 0 -0.1))
+    (texture 0)
     (draw-plane)
   (pop)
   (scale 0.15)
