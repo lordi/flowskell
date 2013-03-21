@@ -7,6 +7,7 @@ import Data.Foldable ( Foldable, sum )
 import Data.IORef
 import Data.Maybe (fromJust)
 import Data.Array (elems)
+import Data.List (elemIndex)
 import Graphics.UI.GLUT hiding (Float)
 
 import Language.Scheme.Types
@@ -35,6 +36,13 @@ setShader shdLstRef [Number n] = do
                         currentProgram $= shdLst !! (fromIntegral n)
                         return (Number 1)
 setShader shdLstRef [] = setShader shdLstRef [Number 0]
+
+getShader :: IORef [Maybe Program] -> [LispVal] -> IO LispVal
+getShader shdLstRef [] = do
+                        shdLst <- get shdLstRef
+                        shd <- get $ currentProgram
+                        let Just index = elemIndex shd shdLst
+                        return (Number $ fromIntegral index)
 
 setUniform shdLstRef [String name, f@(Float _)] = do
                         Just prg <- get currentProgram
@@ -66,6 +74,7 @@ initShaders state = do
     return  [
         ("load-shader", loadShader shdLstRef),
         ("shader", setShader shdLstRef),
+        ("get-shader", getShader shdLstRef),
         ("set-uniform", setUniform shdLstRef),
         ("blur", doBlur state)
       ]
