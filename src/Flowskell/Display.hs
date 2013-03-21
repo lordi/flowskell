@@ -53,6 +53,9 @@ initDisplay state = do
   framebufferRenderbuffer Framebuffer DepthAttachment Renderbuffer drb2
 
 #endif
+
+  textureBinding Texture2D $= Nothing
+
   -- Initialize blur shader
   checkGLSLSupport
   prg <- readCompileAndLink "shaders/fade.vert" "shaders/fade.frag"
