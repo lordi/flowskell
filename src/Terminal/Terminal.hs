@@ -18,6 +18,8 @@ import Types
 
 emptyChar = ' '
 
+defaultTerm = initTerm (24, 80)
+
 initTerm s@(rows, cols) = Terminal {
     cursorPos = (1, 1),
     rows = rows,
