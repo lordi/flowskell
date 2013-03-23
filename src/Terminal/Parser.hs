@@ -58,9 +58,13 @@ pansi = try (do
     <|> try (string "\ESC>" >> return KeypadKeysNumericMode)
     <|> try (string "\ESC(B" >> return Ignored)
     <|> try (string "\ESC#8" >> return Ignored)
+    -- Catch invalid and not implemented sequences
+    <|> try (string "\ESC" >> manyTill anyNonEscapeChar (letter <|> try (char '\ESC')) >> return Ignored)
+
+anyNonEscapeChar = satisfy (/= '\ESC')
 
 pchar :: Parser (TerminalAction)
-pchar = (satisfy (/= '\ESC') >>= return . CharInput)
+pchar = (anyNonEscapeChar >>= return . CharInput)
 
 {-
 stdinReader =
@@ -72,8 +76,11 @@ stdinReader =
             Left b -> (liftIO $ print (b)) -- >> (liftIO $ exitFailure)
         return ()
 
- main = do
+    -}
+
+    {-
+main = do
     hSetBuffering stdin NoBuffering
     print $ play "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
-    runStateT stdinReader ""
-    -}
+    print $ play "|M}\210\195\238\ESC[;\171\&2`[ZZZ_`__a\\a]\\aaa`_Z]["
+    runStateT stdinReader ""-}
