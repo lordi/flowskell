@@ -1,5 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
-module Terminal (newTerminal, applyAction) where
+module Terminal (newTerminal, defaultTerm, applyAction) where
 import System.Process
 import Data.Array.Unboxed
 import Data.Char

@@ -32,7 +32,7 @@ instance Arbitrary TerminalAction where
         ]
 
 handleActions [] t = t
-handleActions (a : as) t = handleActions as (handleAction a t)
+handleActions (a : as) t = handleActions as (applyAction a t)
 
 prop_SafeCursor a =
     let t = (handleActions a defaultTerm)
