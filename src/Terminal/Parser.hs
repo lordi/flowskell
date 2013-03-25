@@ -24,6 +24,8 @@ simplify (ANSIAction [] 'C') = CursorForward 1
 simplify (ANSIAction [n] 'C') = CursorForward n
 simplify (ANSIAction [] 'D') = CursorBackward 1
 simplify (ANSIAction [n] 'D') = CursorBackward n
+simplify (ANSIAction [start, end] 'r') = SetScrollingRegion start end
+
 simplify (ANSIAction [] 'H') = SetCursor 1 1
 simplify (ANSIAction [] 'f') = SetCursor 1 1
 simplify (ANSIAction [y,x] 'H') = SetCursor y x
@@ -43,21 +45,26 @@ pxxx = do
 
 pansi :: Parser (TerminalAction)
 pansi = try (do
-    string "\ESC"
-    optionMaybe (char '[')
+    string "\ESC["
     optionMaybe (char '?')
     param <- optionMaybe pnum
     params <- many (char ';' >> pnum)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
     )
+    <|> try (string "\ESCM" >> return ScrollUp)
+    <|> try (string "\ESCD" >> return ScrollDown)
     <|> try (string "\ESC=" >> return KeypadKeysApplicationsMode)
     <|> try (string "\ESC>" >> return KeypadKeysNumericMode)
     <|> try (string "\ESC(B" >> return Ignored)
     <|> try (string "\ESC#8" >> return Ignored)
+    -- Catch invalid and not implemented sequences
+    <|> try (string "\ESC" >> manyTill anyNonEscapeChar (letter <|> try (char '\ESC')) >> return Ignored)
+
+anyNonEscapeChar = satisfy (/= '\ESC')
 
 pchar :: Parser (TerminalAction)
-pchar = (satisfy (/= '\ESC') >>= return . CharInput)
+pchar = (anyNonEscapeChar >>= return . CharInput)
 
 {-
 stdinReader =
@@ -69,8 +76,11 @@ stdinReader =
             Left b -> (liftIO $ print (b)) -- >> (liftIO $ exitFailure)
         return ()
 
- main = do
+    -}
+
+    {-
+main = do
     hSetBuffering stdin NoBuffering
     print $ play "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
-    runStateT stdinReader ""
-    -}
+    print $ play "|M}\210\195\238\ESC[;\171\&2`[ZZZ_`__a\\a]\\aaa`_Z]["
+    runStateT stdinReader ""-}
