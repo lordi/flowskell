@@ -15,7 +15,7 @@ import Text.Parsec
 import Text.Parsec.String
 
 import Parser
-import Terminal
+import Terminal (newTerminal, applyAction)
 import Types
 
 {-
@@ -61,8 +61,8 @@ runTerminal in_ out = do
         liftIO $ print leftover
 
         forM actions (\x -> do
-            liftIO $ putStrLn $ "executing" ++ show x
-            modify $ handleAction x)
+            liftIO $ putStrLn $ "executing " ++ show x
+            modify $ applyAction x)
 
         term <- get
         put $ term { inBuffer = leftover }
@@ -107,4 +107,4 @@ main = do
     process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
             (Just hInRead) (Just hOutWrite) Nothing
     forkIO $ redirect stdin hInWrite
-    runStateT (runTerminal hInWrite hOutRead) (initTerm (24, 80))
+    runStateT (runTerminal hInWrite hOutRead) (newTerminal (24, 80))
