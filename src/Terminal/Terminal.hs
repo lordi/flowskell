@@ -1,5 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
-module Terminal (newTerminal, defaultTerm, applyAction) where
+module Terminal (newTerminal, defaultTerm, applyAction, testTerm, scrollTerminalDown, scrollTerminalUp) where
 import System.Process
 import Data.Array.Unboxed
 import Data.Char
@@ -19,6 +19,12 @@ import Types
 emptyChar = ' '
 
 defaultTerm = newTerminal (24, 80)
+
+testTerm = defaultTerm {
+            screen = array
+                    ((1, 1), (24,80))
+                    [((y, x), chr $ ord 'A' + y) | x <- [1..80], y <- [1..24]]
+            }
 
 newTerminal s@(rows, cols) = Terminal {
     cursorPos = (1, 1),

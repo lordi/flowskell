@@ -15,7 +15,7 @@ import Text.Parsec
 import Text.Parsec.String
 
 import Parser
-import Terminal (newTerminal, applyAction)
+import Terminal (newTerminal, applyAction, defaultTerm, testTerm, scrollTerminalDown, scrollTerminalUp)
 import Types
 
 {-
@@ -106,5 +106,10 @@ main = do
             ("ROWS", "10")]
     process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
             (Just hInRead) (Just hOutWrite) Nothing
+
+    printTerm testTerm
+    printTerm $ scrollTerminalDown testTerm
+    printTerm $ scrollTerminalUp testTerm
+
     forkIO $ redirect stdin hInWrite
-    runStateT (runTerminal hInWrite hOutRead) (newTerminal (24, 80))
+    runStateT (runTerminal hInWrite hOutRead) defaultTerm
