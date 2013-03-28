@@ -41,8 +41,42 @@ right t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y, x + 1) 
 safeCursor t@Terminal {cursorPos = (y, 81) } =
     safeCursor $ t { cursorPos = (y + 1, 1) }
 
+safeCursor t@Terminal {cursorPos = (25, x), screen = s } =
+    safeCursor $ scrollTerminalDown $ t { cursorPos = (24, 1) }
+
 safeCursor term@Terminal {cursorPos = (y, x), cols = c, rows = r } =
     term { cursorPos = (min r (max 1 y), min c (max 1 x)) }
+
+scrollIndexUp :: (Int, Int) -> ScreenIndex -> ScreenIndex
+scrollIndexUp (startrow, endrow) (y, x)
+    | y > startrow && y <= endrow  = (y - 1, x)
+    | y == startrow                = (endrow, x)
+    | otherwise                    = (y, x)
+
+scrollIndexDown :: (Int, Int) -> ScreenIndex -> ScreenIndex
+scrollIndexDown (startrow, endrow) (y, x)
+    | y >= startrow && y < endrow  = (y + 1, x)
+    | y == endrow                  = (startrow, x)
+    | otherwise                    = (y, x)
+
+scrollScreenUp :: (Int, Int) -> TerminalScreen -> TerminalScreen
+scrollScreenUp r@(startrow, endrow) screen =
+    ixmap ((1, 1), (24, 80)) (scrollIndexUp r) screen
+
+scrollScreenDown r@(startrow, endrow) screen =
+    ixmap ((1, 1), (24, 80)) (scrollIndexDown r) screen
+
+scrollTerminalUp :: Terminal -> Terminal
+scrollTerminalUp term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
+    clearLines [startrow] $ term { screen = scrollScreenUp (scrollingRegion term) s }
+
+scrollTerminalDown :: Terminal -> Terminal
+scrollTerminalDown term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
+    clearLines [endrow] $ term { screen = scrollScreenDown (scrollingRegion term) s }
+
+clearLines :: [Int] -> Terminal -> Terminal
+clearLines rows term@Terminal { screen = s } =
+    term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows] }
 
 applyAction :: TerminalAction -> Terminal -> Terminal
 applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
@@ -53,6 +87,7 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             -- Bell
             CharInput '\a'      -> term
 
+            CharInput '%'       -> term { screen = scrollScreenUp (scrollingRegion term) s }
             -- Newline
             CharInput '\n'      -> term { cursorPos = (y + 1, 1) }
             CharInput '\r'      -> term { cursorPos = (y, 1) }
@@ -71,16 +106,17 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             SetCursor col row   -> term { cursorPos = (col, row) }
 
             SetScrollingRegion start end -> term { scrollingRegion = (start, end) }
-            ScrollUp            -> term { screen = s // [((y_,x_), 'E')|x_<-[1..80],y_<-[1..24]] }
+            ScrollUp            -> scrollTerminalUp term
+            ScrollDown          -> scrollTerminalDown term
 
             -- Erases the screen with the background color and moves the cursor to home.
-            ANSIAction [2] 'J'  -> term { cursorPos = (1, 1), screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..24]] }
+            ANSIAction [2] 'J'  -> clearLines [1..24] $ term { cursorPos = (1, 1) }
 
             -- Erases the screen from the current line up to the top of the screen.
-            ANSIAction [1] 'J'  -> term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[1..y]] }
+            ANSIAction [1] 'J'  -> clearLines [1..y] term
 
             -- Erases the screen from the current line down to the bottom of the screen.
-            ANSIAction _ 'J'    -> term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-[y..24]] }
+            ANSIAction _ 'J'    -> clearLines [y..24] term
 
             -- Erases the entire current line.
             ANSIAction [2] 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }

@@ -2,9 +2,13 @@ module Types where
 import Data.Array.Unboxed
 import Data.Char
 
+type ScreenIndex = (Int, Int)
+
+type TerminalScreen = UArray ScreenIndex Char
+
 data Terminal = Terminal {
-    cursorPos :: (Int, Int),
-    screen :: UArray (Int, Int) Char,
+    cursorPos :: ScreenIndex,
+    screen :: TerminalScreen,
     inBuffer :: String,
     responseBuffer :: String,
     scrollingRegion :: (Int, Int),

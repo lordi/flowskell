@@ -121,7 +121,7 @@ runTerminal a in_ out = do
 
         forM actions (\x -> do
 --            liftIO $ putStrLn $ "executing" ++ show x
-            modifyIORef a $ handleAction x)
+            modifyIORef a $ applyAction x)
 
         term <- readIORef a
         writeIORef a $ term { inBuffer = leftover }
@@ -162,9 +162,9 @@ main = do
     hSetBuffering hOutRead NoBuffering
     hSetBuffering hOutWrite NoBuffering
 
-    initDisplay 
+    initDisplay
 
-    a <- newIORef (initTerm (24, 80))
+    a <- newIORef defaultTerm
 
     displayCallback $= displayHandler a
     idleCallback $= Just (postRedisplay Nothing)
