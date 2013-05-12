@@ -4,10 +4,10 @@ import Data.Array.Unboxed
 import Data.IORef
 import Data.Char
 import Control.Monad
-import Control.Monad.State hiding (state)
+import Control.Monad.State hiding (state, get)
 import System.IO
 
-import Graphics.UI.GLUT hiding (Bool, Float, get)
+import Graphics.UI.GLUT hiding (Bool, Float)
 import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL hiding (Bool, Float, get)
 import Graphics.Rendering.OpenGL.GLU (perspective)
@@ -46,6 +46,7 @@ initDisplay = do
 
   clearColor $= Color4 0 0 0 1
 
+font = Fixed9By15
 
 displayHandler a = do
   clear [ColorBuffer, DepthBuffer]
@@ -62,18 +63,26 @@ displayHandler a = do
           loadIdentity
           sth
 
+
+  -- TODO prettify code
+  (Size screenWidth screenHeight) <- get windowSize
+  chrWidth <- stringWidth font " "
+  chrHeight <- fontHeight font
+  let (chrWidth', chrHeight') = ((fromIntegral chrWidth) * 2.0 / (fromIntegral screenWidth), chrHeight * 2.0 / (fromIntegral screenHeight))
+  let rasterPosition (x, y) = Vertex4 (-1 + ((fromIntegral x - 1) * chrWidth')) (1 - (fromIntegral y) * chrHeight') 0 (1::GLfloat)
+
   withTextMode $ do
-    currentRasterPosition $= Vertex4 (-1) (0.95) 0 (1::GLfloat)
-    renderString Fixed9By15 $ show ((cursorPos term), inBuffer term)
+    currentRasterPosition $= Vertex4 (-1) (-0.95) 0 (1::GLfloat)
+    renderString font $ show ((cursorPos term), inBuffer term)
     let lines = chunk (cols term) $ elems (screen term)
         (y, x) = cursorPos term
     forM_ (zip [1..] lines) $ \(i, s) -> do
-        currentRasterPosition $= Vertex4 (-1) (0.9 - i / 14.0) 0 (1::GLfloat)
-        renderString Fixed9By15 s
+        currentRasterPosition $= rasterPosition (1, i)
+        renderString font s
 
     -- Show cursor
-    currentRasterPosition $= Vertex4 (-1 + fromIntegral x / 40.0) (0.9 - fromIntegral y / 14.0) 0 (1::GLfloat)
-    renderString Fixed9By15 "%"
+    currentRasterPosition $= rasterPosition (x, y)
+    renderString font "|"
 
   swapBuffers
 
