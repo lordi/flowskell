@@ -144,6 +144,10 @@ redirect from to =
     forever $ do
         hGetChar from >>= hPutChar to
 
+keyboardMouseHandler hInWrite (Char c) Down modifiers position = do
+    hPutChar hInWrite c
+keyboardMouseHandler hInWrite chr st modifiers position = do return ()
+
 main = do
     (pOutRead, pOutWrite) <- createPipe
     (pInRead, pInWrite) <- createPipe
@@ -168,14 +172,16 @@ main = do
 
     displayCallback $= displayHandler a
     idleCallback $= Just (postRedisplay Nothing)
+    keyboardMouseCallback $= Just (keyboardMouseHandler hInWrite)
 
     let environment = [
             ("TERM", "vt100"),
             ("COLUMS", "79"),
             ("ROWS", "24")]
-    process <- runProcess "script" ["-c", "bash", "-f", "/dev/null"] Nothing (Just environment)
+    process <- runProcess "script" ["-c", "bash --init-file .bashrc", "-f", "/dev/null"] Nothing (Just environment)
             (Just hInRead) (Just hOutWrite) Nothing
-    forkIO $ redirect stdin hInWrite
+    -- 
+    -- forkIO $ redirect stdin hInWrite
     forkIO $ runTerminal a hInWrite hOutRead
     -- forkIO $ runStateT (runTerminal hInWrite hOutRead) (initTerm (24, 80)) >> return ()
     mainLoop
