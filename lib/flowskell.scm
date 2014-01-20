@@ -1,3 +1,11 @@
+;; Add fluxus syntax
+(define-syntax every-frame
+  (syntax-rules ()
+    ((every-frame exp ...)
+     (define every-frame
+       (lambda ()
+         exp ...)))))
+
 ; stupid helpers
 ; all of these may vanish / change soon
 (define x-axis (vector 1 0 0))

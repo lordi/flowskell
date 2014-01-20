@@ -9,7 +9,7 @@
     (draw-torus)
     (if (> n 1) (tori (- n 1))))
 
-(define (every-frame)
+(every-frame
     (rotate -45 x-axis)
     (scale (towards1 0.5 (towards1 0.5 (sin (secs)))))
     (scale 0.75)

@@ -29,7 +29,7 @@ Scheme:
  * ~~implement vector functions like vmul, vadd, ...~~
  * ~~fix float error~~
  * scheme compilation to Haskell AST instead of evaluation
- * use fluxus-like (every-frame ...) instead of current (define (every-frame) ...)
+ * ~~use fluxus-like (every-frame ...) instead of current (define (every-frame) ...)~~
  * memoize stuff like secs, msecs so that 1) they stay the same for each frame, 2) evaluation is faster due to lazyness
  * maybe add an option to modify lisp tree randomly and use genetic algorithm to weight results (fitness=variance of the output or so)
  * Add (with-color), (with-texture), (with-shader), (preserve-matrix), as (push) ... (pop) is not very Lisp like
