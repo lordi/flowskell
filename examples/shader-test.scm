@@ -20,7 +20,7 @@
 (define (unify n) (+ 0.5 (* 0.5 n)))
 
 ;; Construct the scene
-(define (every-frame)
+(every-frame
     (push)
         (shader *tint*)
         (set-uniform "alpha" (min 0.6 (max 0.2 (unify (cos (secs))))))

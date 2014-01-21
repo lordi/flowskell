@@ -6,7 +6,7 @@
 (shader (load-shader "smooth-edges"))
 
 ;; Draw three planes
-(define (every-frame)
+(every-frame
   (rotate -45 x-axis)
   (color (hsv (/ (msecs) 20)))
   (draw-plane)

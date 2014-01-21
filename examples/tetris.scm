@@ -109,7 +109,7 @@
   (field-map (lambda (x_ y_ type) 
         (if (> type 0) (field-set! (+ x x_) (+ y y_) type))) source))
 
-(define (every-frame)
+(every-frame
   (set! *cury* (- *height* (* 4 (- (secs) *last-emerge*))))
   (if (<= *cury* 0)
     (let ((item (list-ref *items* *curitem*)))

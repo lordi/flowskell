@@ -23,7 +23,7 @@
     (scale 0.65)
     (translate (vector 0 -1 0))
     (rotate -80 x-axis))
-(define (every-frame)
+(every-frame
     (init)
     (translate (vector 0 -1 0))
     (translate (vector 0 (- 0 (% (secs) 1)) 0))

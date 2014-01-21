@@ -18,7 +18,7 @@
         (pop)
     (pop)
     (if (> n 0) (spheres (- n 1))))
-(define (every-frame)
+(every-frame
     (scale 0.03)
     (rotate 55 x-axis)
     (rotate (* (secs) 10) x-axis)

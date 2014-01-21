@@ -13,6 +13,6 @@
     (rotate 45 y-axis)
     (rotate (modulo (/ (msecs) 10) 360) x-axis))
 
-(define (every-frame)
+(every-frame
     (init)
     (cubes 50))

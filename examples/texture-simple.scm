@@ -1,5 +1,5 @@
 (define t (load-texture "examples/img/haskell-logo.png"))
-(define (every-frame)
+(every-frame
   (scale 0.4)
   (translate (vmul 2 left))
 

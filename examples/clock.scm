@@ -36,7 +36,7 @@
     (draw-cube)
     (pop)
     (if (> n 0) (ticks (- n 1) c)))
-(define (every-frame)
+(every-frame
     (scale 0.5 -0.5 0.5)
     (rotate 15 x-axis)
     (translate (vector 0 -0.1 0))

@@ -34,7 +34,7 @@
         (mars)
     (pop))
 
-(define (every-frame)
+(every-frame
     (rotate -45 x-axis)
     (draw-grid)
     (scale 0.25)

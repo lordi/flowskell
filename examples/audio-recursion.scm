@@ -17,7 +17,7 @@
     (rotate 45.0 y-axis)
     (rotate (modulo (/ (msecs) 30) 360) x-axis)
     (rotate (modulo (/ (msecs) 100) 360) z-axis)))
-(define every-frame
+(every-frame
   (lambda ()
     (init)
     (push)

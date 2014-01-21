@@ -26,7 +26,7 @@
         (draw-plane)
     (pop))
 
-(define (every-frame)
+(every-frame
     (rotate (+ -45 (* 1 (cos (secs)))) x-axis)
     (translate (vmul (* 0.15 (sin (secs))) x-axis))
     (translate (vmul (* 0.3 (sin (* (secs) 0.6))) y-axis))

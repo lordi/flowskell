@@ -50,7 +50,7 @@
 ; Remember secs
 (define start-secs (secs))
 
-(define (every-frame)
+(every-frame
   (let ((n (- (secs) start-secs)))
     (scale 0.15)
     (rotate (* 2 (sin (secs))) y-axis)

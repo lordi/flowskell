@@ -36,7 +36,7 @@
     (rotate 90 z-axis)
     (rotate -45 y-axis)
     (rotate (modulo (/ (msecs) 30) 360) x-axis)))
-(define every-frame
+(every-frame
   (lambda ()
     (init)
     (golden-ratio 3)))

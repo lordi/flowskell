@@ -1,4 +1,4 @@
-(define (every-frame)
+(every-frame
     (rotate -15 x-axis)
     (rotate (modulo (/ (msecs) 120) 360) z-axis)
     (scale (+ 0.8 (/ (sin (secs)) 10)))

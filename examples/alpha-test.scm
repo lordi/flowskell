@@ -1,6 +1,6 @@
 (define *smiley* (load-texture "examples/img/smiley.png"))
 (blur 0)
-(define (every-frame)
+(every-frame
   (rotate -40 x-axis)
   (color (vector 1 1 1))
   (texture *smiley*)

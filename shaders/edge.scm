@@ -2,6 +2,6 @@
 (shader (load-shader "edge"))
 (texture (load-texture "examples/img/smiley.png"))
 
-(define (every-frame)
+(every-frame
   (rotate -45 x-axis)
   (draw-plane))

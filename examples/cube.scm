@@ -1,5 +1,5 @@
 ; simple turning cube on a plane
-(define (every-frame)
+(every-frame
   (rotate -45 x-axis)
   (draw-plane)
   (rotate (modulo (/ (msecs) 20) 360) z-axis)

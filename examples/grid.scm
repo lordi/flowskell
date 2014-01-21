@@ -1,5 +1,5 @@
 ; simple turning cube on a grid
-(define every-frame
+(every-frame
   (lambda ()
     (scale 0.5)
     (rotate -45 x-axis)

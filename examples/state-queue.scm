@@ -40,7 +40,7 @@
     (translate (vmul -0.5 y-axis))
     (scale 0.02))
 
-(define (every-frame)
+(every-frame
     (init)
     (set! *queue* (append (cdr *queue*)
                           (list (* (rndf) (sin (secs))))))

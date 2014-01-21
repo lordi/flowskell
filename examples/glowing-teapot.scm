@@ -1,5 +1,5 @@
 ; glowing teapot
-(define every-frame
+(every-frame
   (lambda ()
     (scale 0.25)
     (rotate -45 x-axis)

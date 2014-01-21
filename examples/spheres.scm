@@ -13,7 +13,7 @@
     (if (> n 0) (spheres (- n 1)))
   )
 )
-(define every-frame
+(every-frame
   (lambda ()
     (scale 0.5)
     (rotate -45 x-axis)

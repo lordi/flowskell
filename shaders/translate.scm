@@ -6,7 +6,7 @@
 ;; Load and activate texture
 (texture (load-texture "examples/img/smiley.png"))
 
-(define (every-frame)
+(every-frame
   (rotate -45 x-axis)
   (color (hsv (/ (msecs) 20)))
   (set-uniform "x" 0.33)

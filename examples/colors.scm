@@ -16,7 +16,7 @@
     (if (> n 1) (row (- n 1)))
   )
 )
-(define every-frame
+(every-frame
   (lambda ()
     (translate (vector 0 0.1 0))
     (rotate 120 x-axis)

@@ -8,7 +8,7 @@
     (rotate (* (sin (secs)) 20) (vector 0 0.5 (cos (* (/ (secs) 10) 10))))
     (translate (vector 0 0 (* (sin (secs)) 0.1)))
     (if (> n 0) (cubes (- n 1))))
-(define (every-frame)
+(every-frame
     (scale 0.5)
     (rotate -45 x-axis)
     (draw-grid)

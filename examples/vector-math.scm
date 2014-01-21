@@ -1,5 +1,5 @@
 ; demonstrate vector math, vadd, vmul, vrnd
-(define (every-frame)
+(every-frame
     (scale 0.5)
     (rotate -45 x-axis)
     (rotate (/ (msecs) 30) z-axis)

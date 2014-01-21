@@ -30,6 +30,6 @@
   (translate (vector 0 0.2 0))
   (rotate (modulo (/ (msecs) 30) 360) z-axis))
 
-(define (every-frame)
+(every-frame
   (init)
   (sierpinsky 4))

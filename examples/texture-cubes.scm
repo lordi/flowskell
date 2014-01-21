@@ -2,7 +2,7 @@
 (define *smiley* (load-texture "examples/img/smiley.png"))
 (define *mosaic* (load-texture "examples/img/mosaic.png"))
 
-(define (every-frame)
+(every-frame
     (rotate -45 x-axis)
     (scale 0.5)
     (push)
